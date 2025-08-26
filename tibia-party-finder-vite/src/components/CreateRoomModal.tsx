@@ -30,7 +30,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [title, setTitle] = useState('');
   const [huntType, setHuntType] = useState('');
   const [minLevel, setMinLevel] = useState('');
-  const [maxLevel, setMaxLevel] = useState('');
   const [maxMembers, setMaxMembers] = useState('4');
   const [loading, setLoading] = useState(false);
   
@@ -82,7 +81,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
         title,
         huntType,
         minLevel: parseInt(minLevel),
-        maxLevel: parseInt(maxLevel),
         maxMembers: parseInt(maxMembers),
         currentMembers: 1,
         world: leaderData.world,
@@ -103,7 +101,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
       setTitle('');
       setHuntType('');
       setMinLevel('');
-      setMaxLevel('');
       setMaxMembers('4');
       setLeaderName('');
       setLeaderData(null);
@@ -199,22 +196,12 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div>
             <Input
               type="number"
               placeholder="Level Min"
               value={minLevel}
               onChange={(e) => setMinLevel(e.target.value)}
-              required
-              min="1"
-              max="2000"
-              className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
-            />
-            <Input
-              type="number"
-              placeholder="Level Max"
-              value={maxLevel}
-              onChange={(e) => setMaxLevel(e.target.value)}
               required
               min="1"
               max="2000"

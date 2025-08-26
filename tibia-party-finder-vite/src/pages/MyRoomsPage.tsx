@@ -28,7 +28,7 @@ interface PartyRoom {
   maxLevel: number;
   maxMembers: number;
   currentMembers: number;
-  requiredVocations: string[];
+  requiredVocations?: string[];
   world: string;
   createdBy: string;
   createdAt: any;
@@ -256,7 +256,7 @@ export default function MyRoomsPage() {
                   </div>
 
                   {/* Vocações necessárias */}
-                  {room.requiredVocations.length > 0 && (
+                  {room.requiredVocations && room.requiredVocations.length > 0 && (
                     <div>
                       <p className="text-gray-400 text-sm mb-2">Vocações necessárias:</p>
                       <div className="flex flex-wrap gap-1">

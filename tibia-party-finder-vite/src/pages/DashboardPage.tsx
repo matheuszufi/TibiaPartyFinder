@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { CreateRoomModal } from '../components/CreateRoomModal';
 import { JoinRequestModal } from '../components/JoinRequestModal';
-import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, Crown, UserCheck } from 'lucide-react';
+import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Interface local para resolver problema de importação
@@ -218,96 +218,44 @@ export default function DashboardPage() {
     const slots = [];
     const maxMembers = room.maxMembers;
     
-    console.log('Rendering party slots for room:', room.id, {
-      members: room.members,
-      memberCharacters: room.memberCharacters,
-      currentMembers: room.currentMembers
-    });
-    
-    // Adicionar o líder como primeiro item da lista
+    // Adicionar o líder como primeiro slot
     slots.push(
-      <div key="leader" className="flex items-center justify-between py-1 px-2 bg-orange-900/20 border border-orange-500/30 rounded text-xs">
+      <div key="leader" className="bg-orange-900/30 border border-orange-500/50 rounded-lg p-2">
         <div className="flex items-center gap-2">
-          <Crown className="h-3 w-3 text-orange-400" />
-          <span className="text-orange-300 font-medium">Líder</span>
+          <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+          <span className="text-xs font-medium text-orange-300">Líder</span>
         </div>
-        {room.leaderCharacter ? (
-          <div className="text-right text-white">
-            <div className="font-medium">{room.leaderCharacter.name}</div>
-            <div className="text-gray-300 text-[10px]">
-              Lv.{room.leaderCharacter.level} {room.leaderCharacter.vocation}
-            </div>
-            <div className="text-gray-400 text-[9px]">
-              {room.leaderCharacter.guild 
-                ? (typeof room.leaderCharacter.guild === 'string' 
-                   ? room.leaderCharacter.guild 
-                   : (room.leaderCharacter.guild as any)?.name || '(NEUTRAL)')
-                : '(NEUTRAL)'
-              }
-            </div>
-          </div>
-        ) : (
-          <div className="text-gray-300 text-xs">Info N/A</div>
-        )}
       </div>
     );
 
-    // Adicionar membros aprovados (excluindo o líder)
-    const allMembers = room.members ? room.members : [];
-    const membersWithoutLeader = allMembers.filter(memberId => memberId !== room.createdBy);
+    // Adicionar slots dos membros (excluindo o líder)
+    const memberSlots = maxMembers - 1; // -1 porque o líder já ocupa um slot
+    const actualMembers = room.members ? room.members.length : 0;
     
-    console.log('Processando membros:', {
-      allMembers,
-      createdBy: room.createdBy,
-      membersWithoutLeader
-    });
-
-    membersWithoutLeader.forEach((memberId, index) => {
-      const memberInfo = room.memberCharacters?.[memberId];
+    for (let i = 0; i < memberSlots; i++) {
+      const isEmpty = i >= actualMembers; 
       
-      console.log(`Member ${index + 1}:`, {
-        memberId,
-        memberInfo,
-        allMemberCharacters: room.memberCharacters
-      });
-
-      slots.push(
-        <div key={`member-${memberId}`} className="flex items-center justify-between py-1 px-2 bg-green-900/20 border border-green-500/30 rounded text-xs">
-          <div className="flex items-center gap-2">
-            <UserCheck className="h-3 w-3 text-green-400" />
-            <span className="text-green-300 font-medium">Membro {index + 1}</span>
-          </div>
-          {memberInfo ? (
-            <div className="text-right text-white">
-              <div className="font-medium">{memberInfo.characterName}</div>
-              <div className="text-gray-300 text-[10px]">
-                {memberInfo.characterLevel ? `Lv.${memberInfo.characterLevel}` : 'N/A'} {memberInfo.characterVocation || ''}
-              </div>
-              <div className="text-gray-400 text-[9px]">
-                {memberInfo.characterGuild || '(NEUTRAL)'}
-              </div>
+      if (isEmpty) {
+        // Slot vazio
+        slots.push(
+          <div key={`empty-${i}`} className="bg-gray-800/30 border border-gray-600/30 rounded-lg p-2 border-dashed">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+              <span className="text-xs text-gray-500">Vaga Livre</span>
             </div>
-          ) : (
-            <div className="text-red-400 text-[10px]">Dados não encontrados</div>
-          )}
-        </div>
-      );
-    });
-
-    // Adicionar vagas livres
-    const occupiedSlots = slots.length;
-    const emptySlots = maxMembers - occupiedSlots;
-    
-    for (let i = 0; i < emptySlots; i++) {
-      slots.push(
-        <div key={`empty-${i}`} className="flex items-center justify-between py-1 px-2 bg-gray-800/20 border border-gray-600/20 rounded text-xs border-dashed">
-          <div className="flex items-center gap-2">
-            <Users className="h-3 w-3 text-gray-500" />
-            <span className="text-gray-500">Vaga Livre</span>
           </div>
-          <div className="text-gray-500 text-[10px]">Aguardando</div>
-        </div>
-      );
+        );
+      } else {
+        // Slot ocupado
+        slots.push(
+          <div key={`member-${i}`} className="bg-green-900/30 border border-green-500/50 rounded-lg p-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="text-xs font-medium text-green-300">Membro {i + 1}</span>
+            </div>
+          </div>
+        );
+      }
     }
 
     return slots;
@@ -479,36 +427,13 @@ export default function DashboardPage() {
                       <span className="font-semibold">{room.huntType}</span>
                     </div>
                     
-                    {/* Informações do líder */}
-                    {room.leaderCharacter && (
-                      <div className="bg-blue-900/20 border border-blue-500/30 rounded p-2 mb-3">
-                        <div className="flex items-center text-blue-400 mb-1">
-                          <Users className="h-3 w-3 mr-1" />
-                          <span className="text-xs font-medium">Líder:</span>
-                        </div>
-                        <div className="text-white">
-                          <p className="font-semibold">{room.leaderCharacter.name}</p>
-                          <p className="text-xs text-gray-300">
-                            Level {room.leaderCharacter.level} {room.leaderCharacter.vocation}
-                          </p>
-                          {room.leaderCharacter.guild && (
-                            <p className="text-xs text-gray-400">
-                              Guild: {typeof room.leaderCharacter.guild === 'string' 
-                                ? room.leaderCharacter.guild 
-                                : (room.leaderCharacter.guild as any)?.name || 'Unknown'}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
                     {/* Seção de Vagas da Party */}
                     <div className="bg-gray-900/30 border border-gray-600/30 rounded p-3 mb-3">
                       <div className="flex items-center text-gray-300 mb-3">
                         <Users className="h-3 w-3 mr-1" />
                         <span className="text-xs font-medium">Membros ({room.currentMembers}/{room.maxMembers})</span>
                       </div>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
                         {renderPartySlots(room)}
                       </div>
                     </div>
