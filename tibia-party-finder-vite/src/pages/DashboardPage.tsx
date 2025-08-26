@@ -214,23 +214,53 @@ export default function DashboardPage() {
     return room.members.includes(user.uid);
   };
 
+  // Função para converter vocação em iniciais
+  const getVocationInitials = (vocation: string): string => {
+    if (!vocation) return '';
+    
+    const vocationMap: { [key: string]: string } = {
+      'Knight': 'EK',
+      'Elite Knight': 'EK',
+      'Paladin': 'RP',
+      'Royal Paladin': 'RP',
+      'Sorcerer': 'MS',
+      'Master Sorcerer': 'MS',
+      'Druid': 'ED',
+      'Elder Druid': 'ED'
+    };
+
+    return vocationMap[vocation] || vocation.substring(0, 2).toUpperCase();
+  };
+
   const renderPartySlots = (room: PartyRoom) => {
     const slots = [];
     const maxMembers = room.maxMembers;
+    
+    console.log('Rendering party slots for room:', room.id, {
+      members: room.members,
+      memberCharacters: room.memberCharacters,
+      currentMembers: room.currentMembers
+    });
     
     // Adicionar o líder como primeiro slot
     slots.push(
       <div key="leader" className="bg-orange-900/30 border border-orange-500/50 rounded-lg p-2">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-          <span className="text-xs font-medium text-orange-300">Líder</span>
+          {room.leaderCharacter ? (
+            <span className="text-xs text-white font-medium truncate">
+              {getVocationInitials(room.leaderCharacter.vocation || '')} ({room.leaderCharacter.level || 'N/A'}) {room.leaderCharacter.name || 'N/A'}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-300">Info N/A</span>
+          )}
         </div>
       </div>
     );
 
     // Adicionar slots dos membros (excluindo o líder)
     const memberSlots = maxMembers - 1; // -1 porque o líder já ocupa um slot
-    const actualMembers = room.members ? room.members.length : 0;
+    const actualMembers = room.members ? room.members.length - 1 : 0; // -1 para excluir o líder da contagem
     
     for (let i = 0; i < memberSlots; i++) {
       const isEmpty = i >= actualMembers; 
@@ -246,12 +276,43 @@ export default function DashboardPage() {
           </div>
         );
       } else {
-        // Slot ocupado
+        // Slot ocupado - buscar dados do membro (i+1 porque o líder está na posição 0)
+        const memberId = room.members[i + 1];
+        const memberInfo = room.memberCharacters?.[memberId];
+        
+        console.log(`Member slot ${i}:`, {
+          memberId,
+          memberInfo,
+          allMemberCharacters: room.memberCharacters,
+          memberCharactersKeys: room.memberCharacters ? Object.keys(room.memberCharacters) : 'undefined',
+          roomData: room
+        });
+        
+        // Tentar diferentes métodos para encontrar os dados do membro
+        let finalMemberInfo = memberInfo;
+        
+        if (!finalMemberInfo && room.memberCharacters) {
+          // Método alternativo: verificar se o memberId está em alguma chave
+          const foundKey = Object.keys(room.memberCharacters).find(key => 
+            key === memberId || key.includes(memberId) || memberId.includes(key)
+          );
+          if (foundKey) {
+            finalMemberInfo = room.memberCharacters[foundKey];
+            console.log(`Found member data with alternative key: ${foundKey}`, finalMemberInfo);
+          }
+        }
+        
         slots.push(
           <div key={`member-${i}`} className="bg-green-900/30 border border-green-500/50 rounded-lg p-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-xs font-medium text-green-300">Membro {i + 1}</span>
+              {finalMemberInfo ? (
+                <span className="text-xs text-white font-medium truncate">
+                  {getVocationInitials(finalMemberInfo.characterVocation || '')} ({finalMemberInfo.characterLevel || 'N/A'}) {finalMemberInfo.characterName || 'N/A'}
+                </span>
+              ) : (
+                <span className="text-xs text-gray-300">Dados não encontrados</span>
+              )}
             </div>
           </div>
         );
