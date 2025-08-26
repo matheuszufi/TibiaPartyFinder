@@ -440,15 +440,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-black/20 backdrop-blur-sm border-b border-white/10">
+      <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <Sword className="h-8 w-8 text-yellow-400" />
+            <div className="bg-blue-600 p-2 rounded-lg">
+              <Sword className="h-6 w-6 text-white" />
+            </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Dashboard</h1>
-              <p className="text-sm text-gray-300">
+              <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-sm text-gray-600">
                 {userData.characterName} - Level {userData.level} {userData.vocation} ({userData.world})
               </p>
             </div>
@@ -457,7 +459,7 @@ export default function DashboardPage() {
             <Link to="/my-rooms">
               <Button
                 variant="outline"
-                className="text-white border-white/20 hover:bg-white/10"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 <Users className="h-4 w-4 mr-2" />
                 Minhas Salas
@@ -466,7 +468,7 @@ export default function DashboardPage() {
             <Button
               onClick={handleLogout}
               variant="ghost"
-              className="text-white hover:bg-white/10"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sair
@@ -479,11 +481,11 @@ export default function DashboardPage() {
         {/* Header com Filtros */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Parties Disponíveis</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Parties Disponíveis</h2>
             {hasUserCreatedRoom() ? (
               <Button
                 disabled
-                className="bg-gray-600/50 text-gray-300 cursor-not-allowed"
+                className="bg-gray-300 text-gray-600 cursor-not-allowed"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Você já criou uma party
@@ -491,7 +493,7 @@ export default function DashboardPage() {
             ) : (
               <Button
                 onClick={handleCreateRoom}
-                className="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Party
@@ -500,9 +502,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Filtros */}
-          <Card className="bg-black/30 border-white/20 backdrop-blur-sm">
+          <Card className="bg-white shadow-sm border border-gray-200">
             <CardHeader>
-              <CardTitle className="text-white flex items-center">
+              <CardTitle className="flex items-center text-gray-900">
                 <Filter className="h-5 w-5 mr-2" />
                 Filtros de Busca
               </CardTitle>
@@ -517,7 +519,7 @@ export default function DashboardPage() {
                       placeholder="Buscar parties..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="bg-black/20 border-white/20 text-white placeholder:text-gray-400 pl-10"
+                      className="pl-10 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -525,17 +527,17 @@ export default function DashboardPage() {
                 {/* Filtro por tipo */}
                 <div>
                   <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="bg-black/20 border-white/20 text-white">
+                    <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
                       <SelectValue placeholder="Tipo de Hunt" />
                     </SelectTrigger>
-                    <SelectContent className="bg-black/90 border-white/20">
-                      <SelectItem value="all" className="text-white hover:bg-white/10">Todos os Tipos</SelectItem>
-                      <SelectItem value="EXP Hunt" className="text-white hover:bg-white/10">EXP Hunt</SelectItem>
-                      <SelectItem value="Profit Hunt" className="text-white hover:bg-white/10">Profit Hunt</SelectItem>
-                      <SelectItem value="Boss Hunt" className="text-white hover:bg-white/10">Boss Hunt</SelectItem>
-                      <SelectItem value="Quest" className="text-white hover:bg-white/10">Quest</SelectItem>
-                      <SelectItem value="Task" className="text-white hover:bg-white/10">Task</SelectItem>
-                      <SelectItem value="Bestiary" className="text-white hover:bg-white/10">Bestiary</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200">
+                      <SelectItem value="all" className="text-gray-900">Todos os Tipos</SelectItem>
+                      <SelectItem value="EXP Hunt" className="text-gray-900">EXP Hunt</SelectItem>
+                      <SelectItem value="Profit Hunt" className="text-gray-900">Profit Hunt</SelectItem>
+                      <SelectItem value="Boss Hunt" className="text-gray-900">Boss Hunt</SelectItem>
+                      <SelectItem value="Quest" className="text-gray-900">Quest</SelectItem>
+                      <SelectItem value="Task" className="text-gray-900">Task</SelectItem>
+                      <SelectItem value="Bestiary" className="text-gray-900">Bestiary</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -543,12 +545,12 @@ export default function DashboardPage() {
                 {/* Filtro por level */}
                 <div>
                   <Select value={filterLevel} onValueChange={setFilterLevel}>
-                    <SelectTrigger className="bg-black/20 border-white/20 text-white">
+                    <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
                       <SelectValue placeholder="Filtro Level" />
                     </SelectTrigger>
-                    <SelectContent className="bg-black/90 border-white/20">
-                      <SelectItem value="all-levels" className="text-white hover:bg-white/10">Todos os Levels</SelectItem>
-                      <SelectItem value="my-level" className="text-white hover:bg-white/10">Meu Level</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200">
+                      <SelectItem value="all-levels" className="text-gray-900">Todos os Levels</SelectItem>
+                      <SelectItem value="my-level" className="text-gray-900">Meu Level</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -556,12 +558,12 @@ export default function DashboardPage() {
                 {/* Filtro por world */}
                 <div>
                   <Select value={filterWorld} onValueChange={setFilterWorld}>
-                    <SelectTrigger className="bg-black/20 border-white/20 text-white">
+                    <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
                       <SelectValue placeholder="World" />
                     </SelectTrigger>
-                    <SelectContent className="bg-black/90 border-white/20">
-                      <SelectItem value="all" className="text-white hover:bg-white/10">Todos os Worlds</SelectItem>
-                      <SelectItem value="my-world" className="text-white hover:bg-white/10">Meu World</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200">
+                      <SelectItem value="all" className="text-gray-900">Todos os Worlds</SelectItem>
+                      <SelectItem value="my-world" className="text-gray-900">Meu World</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -573,28 +575,28 @@ export default function DashboardPage() {
         {/* Rooms Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredRooms.length === 0 ? (
-            <Card className="col-span-full bg-black/30 border-white/20 backdrop-blur-sm">
+            <Card className="col-span-full bg-white shadow-sm border border-gray-200">
               <CardContent className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-300">
+                <p className="text-gray-600">
                   {rooms.length === 0 ? 'Nenhuma party encontrada.' : 'Nenhuma party corresponde aos filtros.'}
                 </p>
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-sm text-gray-500 mt-2">
                   {rooms.length === 0 ? 'Seja o primeiro a criar uma party!' : 'Tente ajustar os filtros de busca.'}
                 </p>
               </CardContent>
             </Card>
           ) : (
             filteredRooms.map((room) => (
-              <Card key={room.id} className="bg-black/30 border-white/20 backdrop-blur-sm hover:bg-black/40 transition-colors">
+              <Card key={room.id} className="bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-gray-900">
                     <span>{room.title}</span>
-                    <span className="text-sm font-normal text-gray-300">
+                    <span className="text-sm font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                       {room.currentMembers}/{room.maxMembers}
                     </span>
                   </CardTitle>
-                  <CardDescription className="text-gray-300">
+                  <CardDescription className="text-gray-600">
                     {room.description}
                   </CardDescription>
                 </CardHeader>
@@ -602,36 +604,43 @@ export default function DashboardPage() {
                   {/* Exibição dos GIFs das criaturas/bosses selecionados */}
                   {room.activityType && room.selectedTargets && room.selectedTargets.length > 0 && (
                     <div className="mb-4">
-                      <div className="flex items-center text-gray-300 mb-2">
-                        <span className="text-xs font-medium">
+                      <div className="flex items-center mb-2">
+                        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
                           {room.activityType === 'boss' ? 'Bosses:' : 
                            room.activityType === 'hunt' ? 'Criaturas:' : 'Quests:'}
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-3">
                         {room.selectedTargets.map((target, index) => {
                           const imageUrl = getTargetImageUrl(target, room.activityType!);
                           return (
-                            <div key={index} className="flex flex-col items-center bg-gray-900/40 rounded p-2">
+                            <div key={index} className="tibia-creature-card flex flex-col items-center min-w-[85px] group">
                               {room.activityType === 'quest' ? (
-                                <div className="w-12 h-12 bg-yellow-600/20 border border-yellow-600/30 rounded flex items-center justify-center">
-                                  <Scroll className="w-6 h-6 text-yellow-400" />
+                                <div className="tibia-creature-image w-16 h-16 bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                                  <Scroll className="w-8 h-8 text-amber-600 group-hover:text-amber-700 transition-colors" />
                                 </div>
                               ) : imageUrl ? (
-                                <img 
-                                  src={imageUrl} 
-                                  alt={target}
-                                  className="w-12 h-12 object-contain"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
+                                <div className="tibia-creature-image w-16 h-16 bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-slate-200 rounded-xl p-1.5 shadow-sm group-hover:shadow-md transition-all duration-300 overflow-hidden">
+                                  <img 
+                                    src={imageUrl} 
+                                    alt={target}
+                                    className="w-full h-full object-contain rounded-lg filter group-hover:scale-110 transition-transform duration-300"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        parent.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center"><span class="text-slate-500 text-2xl font-bold">?</span></div>';
+                                      }
+                                    }}
+                                  />
+                                </div>
                               ) : (
-                                <div className="w-12 h-12 bg-gray-600 rounded flex items-center justify-center">
-                                  <span className="text-sm text-gray-300">?</span>
+                                <div className="tibia-creature-image w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-slate-300 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                                  <span className="text-slate-500 text-2xl font-bold group-hover:text-slate-600 transition-colors">?</span>
                                 </div>
                               )}
-                              <span className="text-xs text-gray-300 mt-1 max-w-20 truncate" title={target}>
+                              <span className="text-xs text-gray-700 mt-2.5 max-w-20 truncate text-center font-medium group-hover:text-gray-900 transition-colors" title={target}>
                                 {target}
                               </span>
                             </div>
@@ -642,35 +651,35 @@ export default function DashboardPage() {
                   )}
                   
                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center text-yellow-400">
-                      <span className="font-semibold">{room.activityType || room.huntType}</span>
+                    <div className="flex items-center text-blue-600 font-medium">
+                      <span>{room.activityType || room.huntType}</span>
                     </div>
                     
                     {/* Seção de Vagas da Party */}
-                    <div className="bg-gray-900/30 border border-gray-600/30 rounded p-3 mb-3">
-                      <div className="flex items-center text-gray-300 mb-3">
-                        <Users className="h-3 w-3 mr-1" />
-                        <span className="text-xs font-medium">Membros ({room.currentMembers}/{room.maxMembers})</span>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                      <div className="flex items-center mb-3">
+                        <Users className="h-3 w-3 mr-1 text-blue-600" />
+                        <span className="text-xs font-medium text-gray-700">Membros ({room.currentMembers}/{room.maxMembers})</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
                         {renderPartySlots(room)}
                       </div>
                     </div>
                     
-                    <div className="flex items-center text-gray-300">
+                    <div className="flex items-center text-gray-600">
                       <MapPin className="h-4 w-4 mr-2" />
                       <span>{room.world}</span>
                     </div>
-                    <div className="flex items-center text-gray-300">
+                    <div className="flex items-center text-gray-600">
                       <Users className="h-4 w-4 mr-2" />
                       <span>Level {room.minLevel}-{room.maxLevel}</span>
                     </div>
                     {room.requiredVocations && room.requiredVocations.length > 0 && (
-                      <div className="flex items-center text-gray-300">
+                      <div className="flex items-center text-gray-600">
                         <span className="text-xs">Vocações: {room.requiredVocations.join(', ')}</span>
                       </div>
                     )}
-                    <div className="flex items-center text-gray-400 text-xs">
+                    <div className="flex items-center text-xs text-gray-500">
                       <Clock className="h-3 w-3 mr-2" />
                       <span>Criado às {formatTime(room.createdAt)}</span>
                     </div>
@@ -680,7 +689,7 @@ export default function DashboardPage() {
                       // Botão para o criador da sala
                       <Button 
                         onClick={() => handleViewParty(room.id)}
-                        className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Ver Party
@@ -689,7 +698,7 @@ export default function DashboardPage() {
                       // Botão quando já é membro
                       <Button 
                         disabled
-                        className="w-full bg-green-600/50 text-green-200 cursor-not-allowed"
+                        className="w-full bg-green-100 text-green-700 cursor-not-allowed"
                       >
                         <Users className="h-4 w-4 mr-2" />
                         Você está na Party
@@ -698,7 +707,7 @@ export default function DashboardPage() {
                       // Botão quando já solicitou entrada
                       <Button 
                         disabled
-                        className="w-full bg-yellow-600/50 text-yellow-200 cursor-not-allowed"
+                        className="w-full bg-yellow-100 text-yellow-700 cursor-not-allowed"
                       >
                         <Clock className="h-4 w-4 mr-2" />
                         Aguardando Resposta do Líder
@@ -707,8 +716,9 @@ export default function DashboardPage() {
                       // Botão para solicitar entrada
                       <Button 
                         onClick={() => handleJoinRequest(room.id, room.title)}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        className="w-full"
                         disabled={room.currentMembers >= room.maxMembers}
+                        variant={room.currentMembers >= room.maxMembers ? "secondary" : "default"}
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         {room.currentMembers >= room.maxMembers ? 'Party Cheia' : 'Solicitar Entrada'}

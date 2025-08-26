@@ -5,19 +5,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <header className="bg-black/20 backdrop-blur-sm border-b border-white/10">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Sword className="h-8 w-8 text-yellow-400" />
-            <h1 className="text-2xl font-bold text-white">Tibia Party Finder</h1>
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-600 p-2 rounded-lg">
+              <Sword className="h-6 w-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Tibia Party Finder</h1>
           </div>
-          <div className="space-x-4">
-            <Button asChild variant="ghost" className="text-white hover:bg-white/10">
+          <div className="space-x-3">
+            <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900">
               <Link to="/login">Entrar</Link>
             </Button>
-            <Button asChild className="bg-yellow-600 hover:bg-yellow-700 text-black">
+            <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
               <Link to="/register">Cadastrar</Link>
             </Button>
           </div>
@@ -27,50 +29,56 @@ export default function HomePage() {
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-white mb-6">
+          <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
             Encontre Sua Party Perfeita
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             Conecte-se com outros jogadores, crie grupos para hunts, quests e aventuras épicas no mundo de Tibia.
           </p>
-          <Button asChild size="lg" className="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold px-8 py-4 text-lg">
+          <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
             <Link to="/register">Começar Agora</Link>
           </Button>
         </div>
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <Card className="bg-black/30 border-white/20 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <Users className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-              <CardTitle className="text-white">Encontre Jogadores</CardTitle>
+          <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="text-center pb-4">
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-blue-600" />
+              </div>
+              <CardTitle className="text-gray-900 text-xl">Encontre Jogadores</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-gray-300 text-center">
+              <CardDescription className="text-center text-gray-600 leading-relaxed">
                 Descubra outros jogadores do seu world e nivel para formar groups incríveis.
               </CardDescription>
             </CardContent>
           </Card>
 
-          <Card className="bg-black/30 border-white/20 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <Sword className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-              <CardTitle className="text-white">Crie Parties</CardTitle>
+          <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="text-center pb-4">
+              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sword className="h-8 w-8 text-green-600" />
+              </div>
+              <CardTitle className="text-gray-900 text-xl">Crie Parties</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-gray-300 text-center">
+              <CardDescription className="text-center text-gray-600 leading-relaxed">
                 Monte seu próprio grupo especificando level, vocação e objetivos da hunt.
               </CardDescription>
             </CardContent>
           </Card>
 
-          <Card className="bg-black/30 border-white/20 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <Shield className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-              <CardTitle className="text-white">Seguro & Confiável</CardTitle>
+          <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="text-center pb-4">
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="h-8 w-8 text-purple-600" />
+              </div>
+              <CardTitle className="text-gray-900 text-xl">Seguro & Confiável</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-gray-300 text-center">
+              <CardDescription className="text-center text-gray-600 leading-relaxed">
                 Validação automática de personagens e sistema de reputação para uma experiência segura.
               </CardDescription>
             </CardContent>
@@ -79,20 +87,22 @@ export default function HomePage() {
 
         {/* CTA Section */}
         <div className="text-center mt-16">
-          <Card className="bg-black/40 border-white/20 backdrop-blur-sm max-w-2xl mx-auto">
+          <Card className="max-w-2xl mx-auto bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
             <CardHeader>
-              <CardTitle className="text-white text-2xl">Pronto para Aventurar?</CardTitle>
-              <CardDescription className="text-gray-300 text-lg">
+              <CardTitle className="text-2xl text-gray-900">
+                Pronto para Aventurar?
+              </CardTitle>
+              <CardDescription className="text-lg text-gray-600">
                 Junte-se à nossa comunidade e comece a formar parties épicas hoje mesmo!
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild size="lg" className="w-full bg-yellow-600 hover:bg-yellow-700 text-black font-semibold">
+              <Button asChild size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                 <Link to="/register">Criar Conta Grátis</Link>
               </Button>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-500">
                 Já tem uma conta?{' '}
-                <Link to="/login" className="text-yellow-400 hover:text-yellow-300 underline">
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
                   Faça login aqui
                 </Link>
               </p>
@@ -102,9 +112,9 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black/30 backdrop-blur-sm border-t border-white/10 mt-16">
+      <footer className="bg-gray-50 border-t border-gray-200 mt-16">
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-gray-400">
+          <p className="text-gray-500">
             © 2024 Tibia Party Finder. Não afiliado oficialmente com Tibia ou CipSoft GmbH.
           </p>
         </div>

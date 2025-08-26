@@ -3,9 +3,9 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Users, Calendar, MapPin, Clock, UserCheck, UserX, Eye, Trash2, UserMinus, LogOut } from 'lucide-react';
+import { Users, Calendar, UserCheck, UserX, Trash2, UserMinus, LogOut } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 interface JoinRequest {
@@ -80,15 +80,15 @@ export default function MyRoomsPage() {
     
     // Adicionar o líder como primeiro slot
     slots.push(
-      <div key="leader" className="bg-orange-900/30 border border-orange-500/50 rounded-lg p-2">
+      <div key="leader" className="bg-orange-50 border border-orange-200 rounded-lg p-2">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
           {room.leaderCharacter ? (
-            <span className="text-xs text-white font-medium truncate">
+            <span className="text-xs text-gray-800 font-medium truncate">
               {getVocationInitials(room.leaderCharacter.vocation || '')} ({room.leaderCharacter.level || 'N/A'}) {room.leaderCharacter.name || 'N/A'}
             </span>
           ) : (
-            <span className="text-xs text-gray-300">Info N/A</span>
+            <span className="text-xs text-gray-500">Info N/A</span>
           )}
         </div>
       </div>
@@ -104,9 +104,9 @@ export default function MyRoomsPage() {
       if (isEmpty) {
         // Slot vazio
         slots.push(
-          <div key={`empty-${i}`} className="bg-gray-800/30 border border-gray-600/30 rounded-lg p-2 border-dashed">
+          <div key={`empty-${i}`} className="bg-gray-50 border border-gray-200 rounded-lg p-2 border-dashed">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
               <span className="text-xs text-gray-500">Vaga Livre</span>
             </div>
           </div>
@@ -130,15 +130,15 @@ export default function MyRoomsPage() {
         }
         
         slots.push(
-          <div key={`member-${i}`} className="bg-green-900/30 border border-green-500/50 rounded-lg p-2">
+          <div key={`member-${i}`} className="bg-green-50 border border-green-200 rounded-lg p-2">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               {finalMemberInfo ? (
-                <span className="text-xs text-white font-medium truncate">
+                <span className="text-xs text-gray-800 font-medium truncate">
                   {getVocationInitials(finalMemberInfo.characterVocation || '')} ({finalMemberInfo.characterLevel || 'N/A'}) {finalMemberInfo.characterName || 'N/A'}
                 </span>
               ) : (
-                <span className="text-xs text-gray-300">Dados não encontrados</span>
+                <span className="text-xs text-gray-500">Dados não encontrados</span>
               )}
             </div>
           </div>
@@ -391,22 +391,22 @@ export default function MyRoomsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4">Carregando suas salas...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando suas salas...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 p-6">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Minhas Parties</h1>
-          <p className="text-white/80">Salas criadas por você e parties que você participa</p>
+          <h1 className="text-3xl font-bold mb-2 text-white">Minhas Parties</h1>
+          <p className="text-blue-100">Salas criadas por você e parties que você participa</p>
         </div>
       </div>
 
@@ -414,28 +414,28 @@ export default function MyRoomsPage() {
         {myRooms.length === 0 ? (
           <div className="text-center py-12">
             <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-300 mb-2">Nenhuma sala criada</h2>
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">Nenhuma sala criada</h2>
             <p className="text-gray-500">Você ainda não criou nenhuma party.</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {myRooms.map((room) => (
-              <Card key={room.id} className="bg-black/30 border-white/20 backdrop-blur-sm hover:bg-black/40 transition-colors">
+              <Card key={room.id} className="bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
+                  <CardTitle className="text-gray-900 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span>{room.title}</span>
                       {room.isOwner ? (
-                        <Badge className="text-xs bg-orange-500/20 text-orange-400 border-orange-500/30">
+                        <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200">
                           Owner
                         </Badge>
                       ) : (
-                        <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
+                        <Badge className="text-xs bg-green-100 text-green-700 border-green-200">
                           Membro
                         </Badge>
                       )}
                     </div>
-                    <span className="text-sm font-normal text-gray-300">
+                    <span className="text-sm font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                       {room.currentMembers}/{room.maxMembers}
                     </span>
                   </CardTitle>
@@ -447,8 +447,8 @@ export default function MyRoomsPage() {
                     </div>
                     
                     {/* Seção de Vagas da Party */}
-                    <div className="bg-gray-900/30 border border-gray-600/30 rounded p-3 mb-3">
-                      <div className="flex items-center text-gray-300 mb-3">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                      <div className="flex items-center text-gray-600 mb-3">
                         <Users className="h-3 w-3 mr-1" />
                         <span className="text-xs font-medium">Membros ({room.currentMembers}/{room.maxMembers})</span>
                       </div>
@@ -457,10 +457,10 @@ export default function MyRoomsPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center text-gray-300">
+                    <div className="flex items-center text-gray-600">
                       <span>Level {room.minLevel}+</span>
                     </div>
-                    <div className="flex items-center text-gray-400 text-xs">
+                    <div className="flex items-center text-gray-500 text-xs">
                       <Calendar className="h-3 w-3 mr-2" />
                       <span>Criado às {formatTime(room.createdAt)}</span>
                     </div>
@@ -469,33 +469,52 @@ export default function MyRoomsPage() {
                   
                   {/* Solicitações pendentes */}
                   {room.joinRequests && room.joinRequests.length > 0 && (
-                    <div className="border-t border-gray-700 pt-4">
-                      <p className="text-yellow-400 text-sm font-medium mb-3">
+                    <div className="border-t border-gray-200 pt-4">
+                      <p className="text-orange-600 text-sm font-medium mb-3">
                         Solicitações pendentes ({room.joinRequests.length})
                       </p>
                       <div className="space-y-3">
                         {room.joinRequests.map((request, index) => (
-                          <div key={index} className="bg-gray-800/50 rounded-lg p-3">
+                          <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-colors">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <p className="text-white font-medium">{request.characterName}</p>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <p className="text-gray-900 font-semibold text-sm">{request.characterName}</p>
                                   {request.characterLevel && request.characterVocation && (
-                                    <Badge className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                    <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200">
                                       Level {request.characterLevel} {request.characterVocation}
                                     </Badge>
                                   )}
                                 </div>
                                 
-                                <div className="text-xs text-gray-400 space-y-1">
-                                  <p>{request.userEmail}</p>
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-gray-500 font-medium">Email:</span>
+                                    <span className="text-xs text-gray-700">{request.userEmail}</span>
+                                  </div>
+                                  
                                   {request.characterWorld && (
-                                    <p>Mundo: {request.characterWorld}</p>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs text-gray-500 font-medium">Mundo:</span>
+                                      <span className="text-xs text-gray-700 font-medium">{request.characterWorld}</span>
+                                    </div>
                                   )}
+                                  
                                   {request.characterGuild && (
-                                    <p>Guild: {request.characterGuild}</p>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs text-gray-500 font-medium">Guild:</span>
+                                      <span className="text-xs text-purple-600 font-semibold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                                        {request.characterGuild}
+                                      </span>
+                                    </div>
                                   )}
-                                  <p>Solicitado em: {request.requestedAt?.toDate?.()?.toLocaleString() || 'Data não disponível'}</p>
+                                  
+                                  <div className="flex items-center gap-1 pt-1">
+                                    <span className="text-xs text-gray-500 font-medium">Solicitado em:</span>
+                                    <span className="text-xs text-gray-600">
+                                      {request.requestedAt?.toDate?.()?.toLocaleString() || 'Data não disponível'}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                               
@@ -511,7 +530,7 @@ export default function MyRoomsPage() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleRejectRequest(room.id, request)}
-                                  className="border-red-500/30 text-red-400 hover:bg-red-500/20 px-3 py-1 h-8"
+                                  className="border-red-300 text-red-600 hover:bg-red-50 px-3 py-1 h-8"
                                 >
                                   <UserX className="h-3 w-3" />
                                 </Button>
@@ -525,29 +544,29 @@ export default function MyRoomsPage() {
                   
                   {/* Gerenciamento de Membros - apenas para owners */}
                   {room.isOwner && room.members && room.members.length > 1 && (
-                    <div className="border-t border-gray-700 pt-4">
-                      <p className="text-blue-400 text-sm font-medium mb-3">
+                    <div className="border-t border-gray-200 pt-4">
+                      <p className="text-blue-600 text-sm font-medium mb-3">
                         Gerenciar Membros
                       </p>
                       <div className="space-y-2">
                         {room.members.slice(1).map((memberId, index) => {
                           const memberInfo = room.memberCharacters?.[memberId];
                           return (
-                            <div key={memberId} className="flex items-center justify-between bg-gray-800/30 rounded-lg p-2">
+                            <div key={memberId} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 border border-gray-200">
                               <div className="flex-1">
                                 {memberInfo ? (
-                                  <span className="text-sm text-white">
+                                  <span className="text-sm text-gray-800">
                                     {getVocationInitials(memberInfo.characterVocation || '')} ({memberInfo.characterLevel || 'N/A'}) {memberInfo.characterName || 'N/A'}
                                   </span>
                                 ) : (
-                                  <span className="text-sm text-gray-400">Membro {index + 1}</span>
+                                  <span className="text-sm text-gray-500">Membro {index + 1}</span>
                                 )}
                               </div>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleRemoveMember(room.id, memberId)}
-                                className="border-red-500/30 text-red-400 hover:bg-red-500/20 px-2 py-1 h-7"
+                                className="border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 h-7"
                               >
                                 <UserMinus className="h-3 w-3" />
                               </Button>
@@ -559,14 +578,14 @@ export default function MyRoomsPage() {
                   )}
 
                   {/* Ações da Sala */}
-                  <div className="border-t border-gray-700 pt-4">
+                  <div className="border-t border-gray-200 pt-4">
                     <div className="flex gap-2">
                       {room.isOwner ? (
                         // Botão para deletar sala (apenas owner)
                         <Button
                           onClick={() => handleDeleteRoom(room.id)}
                           variant="outline"
-                          className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                          className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Deletar Sala
@@ -576,7 +595,7 @@ export default function MyRoomsPage() {
                         <Button
                           onClick={() => handleLeaveRoom(room.id)}
                           variant="outline"
-                          className="flex-1 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
+                          className="flex-1 border-orange-300 text-orange-600 hover:bg-orange-50"
                         >
                           <LogOut className="h-4 w-4 mr-2" />
                           Sair da Sala

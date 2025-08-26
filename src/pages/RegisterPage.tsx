@@ -59,13 +59,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Back button */}
         <Button
           asChild
           variant="ghost"
-          className="text-white hover:bg-white/10 mb-6"
+          className="mb-6 text-gray-600 hover:text-gray-900"
         >
           <Link to="/">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -73,17 +73,17 @@ export default function RegisterPage() {
           </Link>
         </Button>
 
-        <Card className="bg-black/40 border-white/20 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Sword className="h-12 w-12 text-yellow-400" />
+        <Card className="bg-white shadow-xl border border-gray-200">
+          <CardHeader className="text-center space-y-4">
+            <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+              <Sword className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-white text-2xl">Cadastrar</CardTitle>
-            <CardDescription className="text-gray-300">
+            <CardTitle className="text-2xl text-gray-900">Cadastrar</CardTitle>
+            <CardDescription className="text-gray-600">
               Crie sua conta para começar a formar parties
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <Input
@@ -92,7 +92,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
+                  className="bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -103,7 +103,7 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
+                  className="bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -113,27 +113,29 @@ export default function RegisterPage() {
                   value={characterName}
                   onChange={(e) => setCharacterName(e.target.value)}
                   required
-                  className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
+                  className="bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               
               {error && (
-                <p className="text-red-400 text-sm text-center">{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-red-700 text-sm text-center">{error}</p>
+                </div>
               )}
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-yellow-600 hover:bg-yellow-700 text-black font-semibold"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {loading ? 'Criando conta...' : 'Cadastrar'}
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-gray-400">
+            <div className="text-center">
+              <p className="text-gray-600">
                 Já tem uma conta?{' '}
-                <Link to="/login" className="text-yellow-400 hover:text-yellow-300 underline">
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
                   Faça login aqui
                 </Link>
               </p>

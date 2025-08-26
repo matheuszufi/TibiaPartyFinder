@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { searchCharacter, fetchBosses, fetchCreatures, TIBIA_QUESTS, type Boss, type Creature } from '../lib/tibia-api';
-import { useRoomLimits } from '../hooks/useRoomLimits';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Card, CardContent } from './ui/card';
-import { User, Search, Loader2, X, Plus, Crown, AlertCircle } from 'lucide-react';
+import { User, Search, Loader2, X, Plus } from 'lucide-react';
 
 const ACTIVITY_TYPES = ['boss', 'hunt', 'quest'];
 
@@ -20,7 +19,6 @@ interface CreateRoomModalProps {
 
 export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [user] = useAuthState(auth);
-  const { userProfile, roomLimits, incrementRoomCount, getRemainingRooms, upgradeToPremium } = useRoomLimits(user?.uid);
   const [title, setTitle] = useState('');
   const [activityType, setActivityType] = useState('');
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
@@ -133,26 +131,18 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
       return;
     }
 
-    // Verificar limites da conta
-    if (!roomLimits.canCreateRoom) {
-      const remainingRooms = getRemainingRooms();
-      if (remainingRooms === 0) {
-        alert(
-          userProfile?.accountType === 'free' 
-            ? 'Limite diário atingido! Contas gratuitas podem criar apenas 1 sala por dia. Upgrade para Premium para salas ilimitadas!' 
-            : 'Limite de salas atingido.'
-        );
-        return;
-      }
-    }
-
     setLoading(true);
 
     try {
-      // Incrementar contador de salas criadas
-      const canProceed = await incrementRoomCount();
-      if (!canProceed) {
-        alert('Erro ao verificar limites da conta. Tente novamente.');
+      // Verificar se o usuário já criou uma sala
+      const existingRoomsQuery = query(
+        collection(db, 'rooms'),
+        where('createdBy', '==', user.uid)
+      );
+      const existingRoomsSnapshot = await getDocs(existingRoomsQuery);
+
+      if (!existingRoomsSnapshot.empty) {
+        alert('Você já criou uma sala. Cada usuário pode criar apenas uma sala por vez.');
         setLoading(false);
         return;
       }
@@ -197,90 +187,28 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-lg">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Plus className="h-5 w-5 text-white" />
-            </div>
-            Criar Nova Party
-          </DialogTitle>
-          <DialogDescription className="text-gray-600">
+      <DialogContent className="bg-black/90 border-white/20 text-white max-w-md">
+        <DialogHeader>
+          <DialogTitle>Criar Nova Party</DialogTitle>
+          <DialogDescription className="text-gray-300">
             Preencha os detalhes da sua party para encontrar outros jogadores.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Status da Conta */}
-        {userProfile && (
-          <Card className={`border-2 ${userProfile.accountType === 'premium' ? 'border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50' : 'border-gray-300 bg-gray-50'}`}>
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {userProfile.accountType === 'premium' ? (
-                    <Crown className="h-4 w-4 text-yellow-600" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-gray-500" />
-                  )}
-                  <span className={`text-sm font-semibold ${userProfile.accountType === 'premium' ? 'text-yellow-700' : 'text-gray-700'}`}>
-                    Conta {userProfile.accountType === 'premium' ? 'Premium' : 'Gratuita'}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-600">
-                  {userProfile.accountType === 'premium' ? (
-                    <span className="text-green-600 font-medium">Salas ilimitadas</span>
-                  ) : (
-                    <span>
-                      {getRemainingRooms()}/1 salas hoje
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {userProfile.accountType === 'free' && getRemainingRooms() === 0 && (
-                <div className="mt-2 p-2 bg-orange-100 border border-orange-200 rounded text-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-orange-700">
-                      <AlertCircle className="h-3 w-3" />
-                      <span>Limite diário atingido!</span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={async () => {
-                        const success = await upgradeToPremium();
-                        if (success) {
-                          alert('Parabéns! Sua conta foi upgradada para Premium! 🎉');
-                        }
-                      }}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs px-2 py-1 h-6"
-                    >
-                      <Crown className="h-3 w-3 mr-1" />
-                      Upgrade
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Título da Party
-            </label>
             <Input
-              placeholder="Ex: Hunt Dragons, Boss Ferumbras, Quest POI..."
+              placeholder="Título da Party"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
             />
           </div>
 
           {/* Campo de busca do líder */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Personagem Líder
             </label>
             <div className="flex gap-2">
@@ -288,13 +216,13 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                 placeholder="Nome do personagem líder"
                 value={leaderName}
                 onChange={(e) => setLeaderName(e.target.value)}
-                className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="bg-black/20 border-white/20 text-white placeholder:text-gray-400 flex-1"
               />
               <Button
                 type="button"
                 onClick={handleSearchLeader}
                 disabled={searchingLeader || !leaderName.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {searchingLeader ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -305,19 +233,19 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
             </div>
             
             {leaderError && (
-              <p className="text-red-600 text-sm mt-2 bg-red-50 border border-red-200 rounded p-2">{leaderError}</p>
+              <p className="text-red-400 text-sm mt-1">{leaderError}</p>
             )}
 
             {leaderData && (
-              <Card className="mt-3 bg-green-50 border-green-200">
+              <Card className="mt-3 bg-green-900/20 border-green-500/30">
                 <CardContent className="p-3">
-                  <div className="flex items-center gap-2 text-green-700">
+                  <div className="flex items-center gap-2 text-green-400">
                     <User className="h-4 w-4" />
-                    <span className="font-semibold">{leaderData.name}</span>
+                    <span className="font-medium">{leaderData.name}</span>
                   </div>
-                  <div className="text-sm text-gray-600 mt-1 space-y-1">
+                  <div className="text-sm text-gray-300 mt-1">
                     <p>Level {leaderData.level} {leaderData.vocation}</p>
-                    <p>Mundo: {leaderData.world}</p>
+                    <p>World: {leaderData.world}</p>
                     {leaderData.guild && <p>Guild: {leaderData.guild.name}</p>}
                   </div>
                 </CardContent>
@@ -326,16 +254,13 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de Atividade
-            </label>
             <Select value={activityType} onValueChange={setActivityType}>
-              <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white">
-                <SelectValue placeholder="Selecione o tipo de atividade" />
+              <SelectTrigger className="bg-black/20 border-white/20 text-white">
+                <SelectValue placeholder="Tipo de Atividade" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectContent className="bg-black/90 border-white/20">
                 {ACTIVITY_TYPES.map((type) => (
-                  <SelectItem key={type} value={type} className="text-gray-900 hover:bg-gray-100 focus:bg-blue-50 focus:text-blue-900">
+                  <SelectItem key={type} value={type} className="text-white hover:bg-white/10">
                     {type === 'boss' ? 'Boss' : type === 'hunt' ? 'Hunt' : 'Quest'}
                   </SelectItem>
                 ))}
@@ -346,7 +271,7 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
           {/* Campo dinâmico para seleção de targets */}
           {activityType && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 {activityType === 'boss' ? 'Bosses' : 
                  activityType === 'hunt' ? 'Criaturas' : 'Quests'}
               </label>
@@ -358,25 +283,25 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                                          activityType === 'hunt' ? 'criatura' : 'quest'}...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                  className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
                 />
               </div>
 
               {/* Lista de selecionados */}
               {selectedTargets.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-sm text-gray-700 mb-2 font-medium">Selecionados:</p>
+                  <p className="text-sm text-gray-300 mb-2">Selecionados:</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedTargets.map((target) => (
                       <div
                         key={target}
-                        className="bg-blue-50 border border-blue-200 rounded-full px-3 py-1 flex items-center gap-2"
+                        className="bg-yellow-600/20 border border-yellow-600/30 rounded px-2 py-1 flex items-center gap-2"
                       >
-                        <span className="text-blue-700 text-sm font-medium">{target}</span>
+                        <span className="text-yellow-300 text-sm">{target}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveTarget(target)}
-                          className="text-blue-500 hover:text-red-500 transition-colors"
+                          className="text-yellow-300 hover:text-red-300 transition-colors"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -387,19 +312,19 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
               )}
 
               {/* Lista de opções disponíveis */}
-              {!loadingData && activityType && (
-                <div className="max-h-32 overflow-y-auto border border-gray-200 rounded bg-gray-50">
+              {(loadingData ? [] : getFilteredTargets()).length > 0 && (
+                <div className="max-h-32 overflow-y-auto border border-white/20 rounded bg-black/20">
                   {getFilteredTargets().map((target) => (
                     <button
                       key={target}
                       type="button"
                       onClick={() => handleAddTarget(target)}
                       disabled={selectedTargets.includes(target)}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-900 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
                     >
                       <span>{target}</span>
                       {!selectedTargets.includes(target) && (
-                        <Plus className="h-4 w-4 text-green-600" />
+                        <Plus className="h-4 w-4 text-green-400" />
                       )}
                     </button>
                   ))}
@@ -407,74 +332,57 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
               )}
 
               {loadingData && (
-                <div className="flex items-center justify-center py-4 bg-gray-50 rounded border border-gray-200">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                  <span className="ml-2 text-gray-600">Carregando...</span>
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                  <span className="ml-2 text-gray-400">Carregando...</span>
                 </div>
               )}
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Level Mínimo
-              </label>
-              <Input
-                type="number"
-                placeholder="Ex: 100"
-                value={minLevel}
-                onChange={(e) => setMinLevel(e.target.value)}
-                required
-                min="1"
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Máximo de Membros
-              </label>
-              <Select value={maxMembers} onValueChange={setMaxMembers}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  {[2, 3, 4, 5].map((num) => (
-                    <SelectItem key={num} value={num.toString()} className="text-gray-900 hover:bg-gray-100">
-                      {num} membros
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Input
+              type="number"
+              placeholder="Level Min"
+              value={minLevel}
+              onChange={(e) => setMinLevel(e.target.value)}
+              required
+              min="1"
+              max="2000"
+              className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
+            />
           </div>
 
-          <DialogFooter className="pt-6">
+          <div>
+            <Select value={maxMembers} onValueChange={setMaxMembers}>
+              <SelectTrigger className="bg-black/20 border-white/20 text-white">
+                <SelectValue placeholder="Máximo de Membros" />
+              </SelectTrigger>
+              <SelectContent className="bg-black/90 border-white/20">
+                {[2, 3, 4, 5, 6, 7, 8].map((num) => (
+                  <SelectItem key={num} value={num.toString()} className="text-white hover:bg-white/10">
+                    {num} jogadores
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="bg-transparent border-white/20 text-white hover:bg-white/10"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              disabled={loading || !roomLimits.canCreateRoom}
-              className={`font-semibold ${
-                !roomLimits.canCreateRoom 
-                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+              disabled={loading}
+              className="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Criando...
-                </>
-              ) : 
-               !roomLimits.canCreateRoom ? 'Limite Atingido' : 
-               'Criar Party'}
+              {loading ? 'Criando...' : 'Criar Party'}
             </Button>
           </DialogFooter>
         </form>
