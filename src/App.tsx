@@ -7,6 +7,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import MyRoomsPage from './pages/MyRoomsPage';
+import { ProfilePage } from './pages/ProfilePage';
+import PremiumPage from './pages/PremiumPage';
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -47,6 +49,14 @@ function App() {
           <Route 
             path="/my-rooms" 
             element={user ? <MyRoomsPage /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/profile" 
+            element={user ? <ProfilePage /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/premium" 
+            element={user ? <PremiumPage /> : <Navigate to="/login" />} 
           />
         </Routes>
       </div>

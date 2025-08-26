@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Sword, Users, Shield } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import exivaLogo from '../assets/images/exiva.png';
 
 export default function HomePage() {
   return (
@@ -10,10 +11,13 @@ export default function HomePage() {
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <Sword className="h-6 w-6 text-white" />
+            <div className="p-1 rounded-lg flex items-center justify-center">
+              <img src={exivaLogo} alt="Exiva" className="h-20 w-20" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Tibia Party Finder</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Exiva</h1>
+              <p className="text-sm text-gray-600 -mt-1">Party Finder</p>
+            </div>
           </div>
           <div className="space-x-3">
             <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900">
@@ -115,7 +119,7 @@ export default function HomePage() {
       <footer className="bg-gray-50 border-t border-gray-200 mt-16">
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="text-gray-500">
-            © 2024 Tibia Party Finder. Não afiliado oficialmente com Tibia ou CipSoft GmbH.
+            © 2024 Exiva. Não afiliado oficialmente com Tibia ou CipSoft GmbH.
           </p>
         </div>
       </footer>

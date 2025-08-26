@@ -8,8 +8,8 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
-import { Users, Calendar, UserCheck, UserX, Trash2, UserMinus, LogOut, UserPlus, Search, Loader2 } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Users, Calendar, UserCheck, UserX, Trash2, UserMinus, LogOut, UserPlus, Search, Loader2, ArrowLeft, User } from 'lucide-react';
+import { Navigate, Link } from 'react-router-dom';
 
 interface JoinRequest {
   userId: string;
@@ -518,16 +518,39 @@ export default function MyRoomsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 text-white">Minhas Parties</h1>
-          <p className="text-blue-100">Salas criadas por você e parties que você participa</p>
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar ao Dashboard
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Minhas Parties</h1>
+                <p className="text-sm text-gray-600">Salas criadas por você e parties que você participa</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to="/profile">
+                <Button
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Perfil
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-6xl mx-auto p-6">
+      <main className="container mx-auto px-4 py-8">
         {myRooms.length === 0 ? (
           <div className="text-center py-12">
             <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -742,7 +765,7 @@ export default function MyRoomsPage() {
             ))}
           </div>
         )}
-      </div>
+      </main>
       
       {/* Modal para adicionar membro */}
       <Dialog open={addMemberModal.isOpen} onOpenChange={closeAddMemberModal}>

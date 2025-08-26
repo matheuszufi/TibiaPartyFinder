@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { CreateRoomModal } from '../components/CreateRoomModal';
 import { JoinRequestModal } from '../components/JoinRequestModal';
-import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, CheckCircle, Scroll, Calendar } from 'lucide-react';
+import { LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, CheckCircle, Scroll, Calendar, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import exivaLogo from '../assets/images/exiva.png';
 
 // Interface local para resolver problema de importação
 interface PartyRoom {
@@ -88,7 +89,7 @@ export default function DashboardPage() {
       const fetchUserData = async () => {
         try {
           console.log('Buscando dados do usuário:', user.uid);
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userDoc = await getDoc(doc(db, 'userProfiles', user.uid));
           if (userDoc.exists()) {
             console.log('Dados do usuário encontrados:', userDoc.data());
             setUserData(userDoc.data());
@@ -462,15 +463,13 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <Sword className="h-6 w-6 text-white" />
+          <div className="flex items-center space-x-3">
+            <div className="p-1 rounded-lg flex items-center justify-center">
+              <img src={exivaLogo} alt="Exiva" className="h-20 w-20" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-sm text-gray-600">
-                {userData.characterName} - Level {userData.level} {userData.vocation} ({userData.world})
-              </p>
+              <h1 className="text-2xl font-bold text-gray-900">Exiva</h1>
+              <p className="text-sm text-gray-600 -mt-1">Party Finder</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -483,6 +482,15 @@ export default function DashboardPage() {
                 Minhas Salas
               </Button>
             </Link>
+            <Link to="/profile">
+              <Button
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Perfil
+              </Button>
+            </Link>
             <Button
               onClick={handleLogout}
               variant="ghost"
@@ -491,6 +499,14 @@ export default function DashboardPage() {
               <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
+          </div>
+        </div>
+        {/* User Info Bar */}
+        <div className="bg-gray-50 border-t border-gray-200">
+          <div className="container mx-auto px-4 py-2">
+            <p className="text-sm text-gray-700 text-center">
+              <span className="font-medium">{userData.characterName}</span> - Level {userData.level} {userData.vocation} ({userData.world})
+            </p>
           </div>
         </div>
       </header>
