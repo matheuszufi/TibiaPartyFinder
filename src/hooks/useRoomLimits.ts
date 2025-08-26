@@ -58,11 +58,11 @@ export const useRoomLimits = (userId: string | undefined) => {
     // Reset contador se é um novo dia
     const roomsToday = lastCreatedDate === today ? (profile.roomsCreatedToday || 0) : 0;
     
-    const maxRooms = profile.accountType === 'premium' ? Infinity : 1;
-    const canCreate = roomsToday < maxRooms;
+    // Apenas contas premium podem criar salas
+    const canCreate = profile.accountType === 'premium';
 
     setRoomLimits({
-      maxRoomsPerDay: profile.accountType === 'premium' ? Infinity : 1,
+      maxRoomsPerDay: profile.accountType === 'premium' ? Infinity : 0,
       canCreateRoom: canCreate,
       roomsCreatedToday: roomsToday
     });
@@ -71,16 +71,16 @@ export const useRoomLimits = (userId: string | undefined) => {
   const incrementRoomCount = async () => {
     if (!userId || !userProfile) return false;
 
+    // Apenas contas premium podem criar salas
+    if (userProfile.accountType !== 'premium') {
+      return false;
+    }
+
     const today = new Date().toDateString();
     const lastCreatedDate = userProfile.lastRoomCreatedDate || '';
     
     // Reset contador se é um novo dia
     const currentCount = lastCreatedDate === today ? (userProfile.roomsCreatedToday || 0) : 0;
-    
-    // Verificar se pode criar
-    if (userProfile.accountType === 'free' && currentCount >= 1) {
-      return false;
-    }
 
     try {
       const userRef = doc(db, 'userProfiles', userId);
@@ -133,7 +133,7 @@ export const useRoomLimits = (userId: string | undefined) => {
 
   const getRemainingRooms = () => {
     if (userProfile?.accountType === 'premium') return Infinity;
-    return Math.max(0, 1 - roomLimits.roomsCreatedToday);
+    return 0; // Contas gratuitas não podem criar salas
   };
 
   const getResetTime = () => {

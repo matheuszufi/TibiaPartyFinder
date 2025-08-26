@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './lib/firebase';
+import { useRoomCleanup } from './hooks/useRoomCleanup';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -9,6 +10,9 @@ import MyRoomsPage from './pages/MyRoomsPage';
 
 function App() {
   const [user, loading] = useAuthState(auth);
+  
+  // Ativar limpeza automática de salas expiradas
+  useRoomCleanup();
 
   if (loading) {
     return (

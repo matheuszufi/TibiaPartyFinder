@@ -4,13 +4,14 @@ import { signOut } from 'firebase/auth';
 import { collection, query, onSnapshot, doc, getDoc, orderBy, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { fetchBosses, fetchCreatures, type Boss, type Creature } from '../lib/tibia-api';
+import { formatTimeRemaining } from '../utils/roomExpiration';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { CreateRoomModal } from '../components/CreateRoomModal';
 import { JoinRequestModal } from '../components/JoinRequestModal';
-import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, CheckCircle, Scroll } from 'lucide-react';
+import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, CheckCircle, Scroll, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Interface local para resolver problema de importação
@@ -29,6 +30,9 @@ interface PartyRoom {
   world: string;
   createdBy: string;
   createdAt: any; // Firebase Timestamp
+  expiresAt?: any; // Firebase Timestamp para validade
+  scheduledFor?: any; // Firebase Timestamp para agendamento
+  isScheduled?: boolean; // Flag para salas agendadas
   members: string[];
   isActive: boolean;
   memberCharacters?: { [userId: string]: {
@@ -245,6 +249,20 @@ export default function DashboardPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const formatScheduledDateTime = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const time = date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    return `o dia ${day}/${month} às ${time}`;
   };
 
   const handleJoinRequest = async (roomId: string, roomTitle: string) => {
@@ -683,6 +701,23 @@ export default function DashboardPage() {
                       <Clock className="h-3 w-3 mr-2" />
                       <span>Criado às {formatTime(room.createdAt)}</span>
                     </div>
+                    
+                    {/* Informações de validade e agendamento */}
+                    {room.expiresAt && (
+                      <div className="flex items-center text-xs">
+                        {room.isScheduled ? (
+                          <div className="flex items-center text-blue-600">
+                            <Calendar className="h-3 w-3 mr-2" />
+                            <span>Agendada para {formatScheduledDateTime(room.scheduledFor)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-orange-600">
+                            <Clock className="h-3 w-3 mr-2" />
+                            <span>{formatTimeRemaining(room.expiresAt.toDate())}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-4">
                     {room.createdBy === user?.uid ? (

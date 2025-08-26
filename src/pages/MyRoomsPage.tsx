@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { searchCharacter } from '../lib/tibia-api';
 import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Users, Calendar, UserCheck, UserX, Trash2, UserMinus, LogOut } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Users, Calendar, UserCheck, UserX, Trash2, UserMinus, LogOut, UserPlus, Search, Loader2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 interface JoinRequest {
@@ -55,6 +58,14 @@ export default function MyRoomsPage() {
   const [user] = useAuthState(auth);
   const [myRooms, setMyRooms] = useState<(PartyRoom & { isOwner: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Estados para modal de adicionar membro
+  const [addMemberModal, setAddMemberModal] = useState<{ isOpen: boolean; roomId: string }>({ isOpen: false, roomId: '' });
+  const [characterName, setCharacterName] = useState('');
+  const [characterData, setCharacterData] = useState<any>(null);
+  const [searchingCharacter, setSearchingCharacter] = useState(false);
+  const [characterError, setCharacterError] = useState('');
+  const [addingMember, setAddingMember] = useState(false);
 
   // Função para converter vocação em iniciais
   const getVocationInitials = (vocation: string): string => {
@@ -340,6 +351,112 @@ export default function MyRoomsPage() {
     }
   };
 
+  // Funções para adicionar membro manualmente
+  const handleSearchCharacter = async () => {
+    if (!characterName.trim()) return;
+
+    setSearchingCharacter(true);
+    setCharacterError('');
+
+    try {
+      const character = await searchCharacter(characterName.trim());
+      if (character) {
+        setCharacterData(character);
+        setCharacterError('');
+      } else {
+        setCharacterError('Personagem não encontrado');
+        setCharacterData(null);
+      }
+    } catch (error) {
+      setCharacterError('Erro ao buscar personagem');
+      setCharacterData(null);
+    }
+
+    setSearchingCharacter(false);
+  };
+
+  const handleAddMember = async () => {
+    if (!characterData || !addMemberModal.roomId) return;
+
+    setAddingMember(true);
+
+    try {
+      const roomRef = doc(db, 'rooms', addMemberModal.roomId);
+      const roomDoc = await getDoc(roomRef);
+      const currentData = roomDoc.data();
+
+      if (!currentData) {
+        setCharacterError('Sala não encontrada');
+        return;
+      }
+
+      // Verificar se a sala está cheia
+      if (currentData.members.length >= currentData.maxMembers) {
+        setCharacterError('A sala já está cheia');
+        return;
+      }
+
+      // Verificar se o personagem já está na sala
+      const characterAlreadyInRoom = Object.values(currentData.memberCharacters || {}).some(
+        (member: any) => member.characterName?.toLowerCase() === characterData.name.toLowerCase()
+      );
+
+      if (characterAlreadyInRoom) {
+        setCharacterError('Este personagem já está na sala');
+        return;
+      }
+
+      // Gerar um ID fictício para o membro (já que não temos conta real)
+      const memberId = `manual_${Date.now()}`;
+
+      // Adicionar o membro
+      const updatedMembers = [...currentData.members, memberId];
+      const updatedMemberCharacters = {
+        ...currentData.memberCharacters,
+        [memberId]: {
+          characterName: characterData.name,
+          characterLevel: characterData.level,
+          characterVocation: characterData.vocation,
+          characterWorld: characterData.world,
+          characterGuild: characterData.guild?.name || null
+        }
+      };
+
+      await updateDoc(roomRef, {
+        members: updatedMembers,
+        memberCharacters: updatedMemberCharacters,
+        currentMembers: updatedMembers.length
+      });
+
+      // Reset modal
+      setAddMemberModal({ isOpen: false, roomId: '' });
+      setCharacterName('');
+      setCharacterData(null);
+      setCharacterError('');
+      
+      console.log('Membro adicionado com sucesso');
+    } catch (error) {
+      console.error('Erro ao adicionar membro:', error);
+      setCharacterError('Erro ao adicionar membro');
+    }
+
+    setAddingMember(false);
+  };
+
+  const openAddMemberModal = (roomId: string) => {
+    setAddMemberModal({ isOpen: true, roomId });
+    setCharacterName('');
+    setCharacterData(null);
+    setCharacterError('');
+  };
+
+  const closeAddMemberModal = () => {
+    setAddMemberModal({ isOpen: false, roomId: '' });
+    setCharacterName('');
+    setCharacterData(null);
+    setCharacterError('');
+  };
+
   const handleLeaveRoom = async (roomId: string) => {
     if (!confirm('Tem certeza que deseja sair desta sala?')) {
       return;
@@ -543,37 +660,54 @@ export default function MyRoomsPage() {
                   )}
                   
                   {/* Gerenciamento de Membros - apenas para owners */}
-                  {room.isOwner && room.members && room.members.length > 1 && (
+                  {room.isOwner && (
                     <div className="border-t border-gray-200 pt-4">
-                      <p className="text-blue-600 text-sm font-medium mb-3">
-                        Gerenciar Membros
-                      </p>
-                      <div className="space-y-2">
-                        {room.members.slice(1).map((memberId, index) => {
-                          const memberInfo = room.memberCharacters?.[memberId];
-                          return (
-                            <div key={memberId} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 border border-gray-200">
-                              <div className="flex-1">
-                                {memberInfo ? (
-                                  <span className="text-sm text-gray-800">
-                                    {getVocationInitials(memberInfo.characterVocation || '')} ({memberInfo.characterLevel || 'N/A'}) {memberInfo.characterName || 'N/A'}
-                                  </span>
-                                ) : (
-                                  <span className="text-sm text-gray-500">Membro {index + 1}</span>
-                                )}
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRemoveMember(room.id, memberId)}
-                                className="border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 h-7"
-                              >
-                                <UserMinus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          );
-                        })}
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-blue-600 text-sm font-medium">
+                          Gerenciar Membros
+                        </p>
+                        {room.members.length < room.maxMembers && (
+                          <Button
+                            size="sm"
+                            onClick={() => openAddMemberModal(room.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7 text-xs"
+                          >
+                            <UserPlus className="h-3 w-3 mr-1" />
+                            Adicionar
+                          </Button>
+                        )}
                       </div>
+                      
+                      {room.members && room.members.length > 1 ? (
+                        <div className="space-y-2">
+                          {room.members.slice(1).map((memberId, index) => {
+                            const memberInfo = room.memberCharacters?.[memberId];
+                            return (
+                              <div key={memberId} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 border border-gray-200">
+                                <div className="flex-1">
+                                  {memberInfo ? (
+                                    <span className="text-sm text-gray-800">
+                                      {getVocationInitials(memberInfo.characterVocation || '')} ({memberInfo.characterLevel || 'N/A'}) {memberInfo.characterName || 'N/A'}
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm text-gray-500">Membro {index + 1}</span>
+                                  )}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRemoveMember(room.id, memberId)}
+                                  className="border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 h-7"
+                                >
+                                  <UserMinus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">Nenhum membro além do líder</p>
+                      )}
                     </div>
                   )}
 
@@ -609,6 +743,87 @@ export default function MyRoomsPage() {
           </div>
         )}
       </div>
+      
+      {/* Modal para adicionar membro */}
+      <Dialog open={addMemberModal.isOpen} onOpenChange={closeAddMemberModal}>
+        <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              Adicionar Membro
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nome do Personagem
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Digite o nome do personagem"
+                  value={characterName}
+                  onChange={(e) => setCharacterName(e.target.value)}
+                  className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Button
+                  onClick={handleSearchCharacter}
+                  disabled={searchingCharacter || !characterName.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4"
+                >
+                  {searchingCharacter ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              
+              {characterError && (
+                <p className="text-red-600 text-sm mt-2 bg-red-50 border border-red-200 rounded p-2">
+                  {characterError}
+                </p>
+              )}
+            </div>
+
+            {characterData && (
+              <div className="bg-green-50 border border-green-200 rounded p-3">
+                <div className="flex items-center gap-2 text-green-700 mb-2">
+                  <span className="font-semibold">{characterData.name}</span>
+                </div>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>Level {characterData.level} {characterData.vocation}</p>
+                  <p>Mundo: {characterData.world}</p>
+                  {characterData.guild && <p>Guild: {characterData.guild.name}</p>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={closeAddMemberModal}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAddMember}
+              disabled={!characterData || addingMember}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {addingMember ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Adicionando...
+                </>
+              ) : (
+                'Adicionar Membro'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
