@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { searchCharacter } from '../lib/tibia-api';
 import { Button } from './ui/button';
@@ -77,6 +77,19 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
     setLoading(true);
 
     try {
+      // Verificar se o usuário já criou uma sala
+      const existingRoomsQuery = query(
+        collection(db, 'rooms'),
+        where('createdBy', '==', user.uid)
+      );
+      const existingRoomsSnapshot = await getDocs(existingRoomsQuery);
+
+      if (!existingRoomsSnapshot.empty) {
+        alert('Você já criou uma sala. Cada usuário pode criar apenas uma sala por vez.');
+        setLoading(false);
+        return;
+      }
+
       await addDoc(collection(db, 'rooms'), {
         title,
         huntType,

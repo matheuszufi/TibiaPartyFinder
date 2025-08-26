@@ -5,7 +5,7 @@ import { auth, db } from '../lib/firebase';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Users, Calendar, MapPin, Clock, UserCheck, UserX, Eye, Trash2, UserMinus } from 'lucide-react';
+import { Users, Calendar, MapPin, Clock, UserCheck, UserX, Eye, Trash2, UserMinus, LogOut } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 interface JoinRequest {
@@ -48,11 +48,12 @@ interface PartyRoom {
     vocation: string;
     guild?: string | { name: string; rank: string };
   };
+  isOwner?: boolean;
 }
 
 export default function MyRoomsPage() {
   const [user] = useAuthState(auth);
-  const [myRooms, setMyRooms] = useState<PartyRoom[]>([]);
+  const [myRooms, setMyRooms] = useState<(PartyRoom & { isOwner: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Função para converter vocação em iniciais
@@ -163,22 +164,48 @@ export default function MyRoomsPage() {
   useEffect(() => {
     if (!user) return;
 
-    const q = query(
+    // Query para salas criadas pelo usuário
+    const createdRoomsQuery = query(
       collection(db, 'rooms'),
       where('createdBy', '==', user.uid)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const roomsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as PartyRoom[];
+    // Query para salas onde o usuário é membro
+    const memberRoomsQuery = query(
+      collection(db, 'rooms'),
+      where('members', 'array-contains', user.uid)
+    );
 
-      setMyRooms(roomsData);
-      setLoading(false);
+    const unsubscribeCreated = onSnapshot(createdRoomsQuery, (snapshot) => {
+      const createdRooms = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        isOwner: true
+      })) as (PartyRoom & { isOwner: boolean })[];
+
+      const unsubscribeMember = onSnapshot(memberRoomsQuery, (memberSnapshot) => {
+        const memberRooms = memberSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          isOwner: false
+        })) as (PartyRoom & { isOwner: boolean })[];
+
+        // Combinar as salas, removendo duplicatas (caso seja criador E membro)
+        const allRooms = [...createdRooms];
+        memberRooms.forEach(memberRoom => {
+          if (!allRooms.find(room => room.id === memberRoom.id)) {
+            allRooms.push(memberRoom);
+          }
+        });
+
+        setMyRooms(allRooms);
+        setLoading(false);
+      });
+
+      return () => unsubscribeMember();
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeCreated();
   }, [user]);
 
   const handleApproveRequest = async (roomId: string, request: JoinRequest) => {
@@ -313,6 +340,39 @@ export default function MyRoomsPage() {
     }
   };
 
+  const handleLeaveRoom = async (roomId: string) => {
+    if (!confirm('Tem certeza que deseja sair desta sala?')) {
+      return;
+    }
+
+    if (!user) return;
+
+    try {
+      const roomRef = doc(db, 'rooms', roomId);
+      const roomDoc = await getDoc(roomRef);
+      const currentData = roomDoc.data();
+
+      if (!currentData) return;
+
+      // Remover o usuário da lista de membros
+      const updatedMembers = currentData.members.filter((id: string) => id !== user.uid);
+      
+      // Remover dados do personagem do usuário
+      const updatedMemberCharacters = { ...currentData.memberCharacters };
+      delete updatedMemberCharacters[user.uid];
+
+      await updateDoc(roomRef, {
+        members: updatedMembers,
+        memberCharacters: updatedMemberCharacters,
+        currentMembers: updatedMembers.length
+      });
+
+      console.log('Você saiu da sala com sucesso');
+    } catch (error) {
+      console.error('Erro ao sair da sala:', error);
+    }
+  };
+
   const getHuntTypeColor = (type: string) => {
     switch (type) {
       case 'EXP Hunt': return 'text-red-400';
@@ -345,8 +405,8 @@ export default function MyRoomsPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 p-6">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Minhas Salas</h1>
-          <p className="text-white/80">Gerencie suas parties e solicitações de entrada</p>
+          <h1 className="text-3xl font-bold mb-2">Minhas Parties</h1>
+          <p className="text-white/80">Salas criadas por você e parties que você participa</p>
         </div>
       </div>
 
@@ -363,7 +423,18 @@ export default function MyRoomsPage() {
               <Card key={room.id} className="bg-black/30 border-white/20 backdrop-blur-sm hover:bg-black/40 transition-colors">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center justify-between">
-                    <span>{room.title}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{room.title}</span>
+                      {room.isOwner ? (
+                        <Badge className="text-xs bg-orange-500/20 text-orange-400 border-orange-500/30">
+                          Owner
+                        </Badge>
+                      ) : (
+                        <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
+                          Membro
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-sm font-normal text-gray-300">
                       {room.currentMembers}/{room.maxMembers}
                     </span>
@@ -452,8 +523,8 @@ export default function MyRoomsPage() {
                     </div>
                   )}
                   
-                  {/* Gerenciamento de Membros */}
-                  {room.members && room.members.length > 1 && (
+                  {/* Gerenciamento de Membros - apenas para owners */}
+                  {room.isOwner && room.members && room.members.length > 1 && (
                     <div className="border-t border-gray-700 pt-4">
                       <p className="text-blue-400 text-sm font-medium mb-3">
                         Gerenciar Membros
@@ -490,14 +561,27 @@ export default function MyRoomsPage() {
                   {/* Ações da Sala */}
                   <div className="border-t border-gray-700 pt-4">
                     <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleDeleteRoom(room.id)}
-                        variant="outline"
-                        className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/20"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Deletar Sala
-                      </Button>
+                      {room.isOwner ? (
+                        // Botão para deletar sala (apenas owner)
+                        <Button
+                          onClick={() => handleDeleteRoom(room.id)}
+                          variant="outline"
+                          className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Deletar Sala
+                        </Button>
+                      ) : (
+                        // Botão para sair da sala (apenas membro)
+                        <Button
+                          onClick={() => handleLeaveRoom(room.id)}
+                          variant="outline"
+                          className="flex-1 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sair da Sala
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut } from 'firebase/auth';
-import { collection, query, onSnapshot, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, getDoc, orderBy, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { CreateRoomModal } from '../components/CreateRoomModal';
 import { JoinRequestModal } from '../components/JoinRequestModal';
-import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus } from 'lucide-react';
+import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Interface local para resolver problema de importação
@@ -194,9 +194,49 @@ export default function DashboardPage() {
     });
   };
 
-  const handleJoinRequest = (roomId: string, roomTitle: string) => {
-    setSelectedRoom({ id: roomId, title: roomTitle });
-    setShowJoinModal(true);
+  const handleJoinRequest = async (roomId: string, roomTitle: string) => {
+    if (!user) return;
+
+    // Verificar se o usuário já está em alguma sala
+    const userCurrentRoom = rooms.find(room => room.members?.includes(user.uid));
+    
+    if (userCurrentRoom) {
+      const confirmLeave = confirm(
+        `Você já está na party "${userCurrentRoom.title}". Para entrar em uma nova party, você precisa sair da atual. Deseja sair da party atual?`
+      );
+      
+      if (confirmLeave) {
+        try {
+          // Sair da sala atual
+          const currentRoomRef = doc(db, 'rooms', userCurrentRoom.id);
+          const currentRoomDoc = await getDoc(currentRoomRef);
+          const currentData = currentRoomDoc.data();
+
+          if (currentData) {
+            const updatedMembers = currentData.members.filter((id: string) => id !== user.uid);
+            const updatedMemberCharacters = { ...currentData.memberCharacters };
+            delete updatedMemberCharacters[user.uid];
+
+            await updateDoc(currentRoomRef, {
+              members: updatedMembers,
+              memberCharacters: updatedMemberCharacters,
+              currentMembers: updatedMembers.length
+            });
+
+            // Após sair da sala atual, abrir modal para nova sala
+            setSelectedRoom({ id: roomId, title: roomTitle });
+            setShowJoinModal(true);
+          }
+        } catch (error) {
+          console.error('Erro ao sair da sala atual:', error);
+          alert('Erro ao sair da sala atual. Tente novamente.');
+        }
+      }
+    } else {
+      // Usuário não está em nenhuma sala, pode entrar diretamente
+      setSelectedRoom({ id: roomId, title: roomTitle });
+      setShowJoinModal(true);
+    }
   };
 
   const handleViewParty = (_roomId: string) => {
@@ -212,6 +252,19 @@ export default function DashboardPage() {
   const isUserMember = (room: PartyRoom) => {
     if (!user?.uid || !room.members) return false;
     return room.members.includes(user.uid);
+  };
+
+  const hasUserCreatedRoom = () => {
+    if (!user?.uid) return false;
+    return rooms.some(room => room.createdBy === user.uid);
+  };
+
+  const handleCreateRoom = () => {
+    if (hasUserCreatedRoom()) {
+      alert('Você já criou uma sala. Cada usuário pode criar apenas uma sala por vez. Vá para "Minhas Parties" para gerenciar sua sala atual.');
+      return;
+    }
+    setShowCreateModal(true);
   };
 
   // Função para converter vocação em iniciais
@@ -374,13 +427,23 @@ export default function DashboardPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white">Parties Disponíveis</h2>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Party
-            </Button>
+            {hasUserCreatedRoom() ? (
+              <Button
+                disabled
+                className="bg-gray-600/50 text-gray-300 cursor-not-allowed"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Você já criou uma party
+              </Button>
+            ) : (
+              <Button
+                onClick={handleCreateRoom}
+                className="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Party
+              </Button>
+            )}
           </div>
 
           {/* Filtros */}
