@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Users, Calendar, Trophy, Swords, Crown, UserCheck, UserX } from 'lucide-react';
+import { Users, Calendar, MapPin, Clock, UserCheck, UserX, Eye, Trash2, UserMinus } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 interface JoinRequest {
@@ -54,6 +54,111 @@ export default function MyRoomsPage() {
   const [user] = useAuthState(auth);
   const [myRooms, setMyRooms] = useState<PartyRoom[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Função para converter vocação em iniciais
+  const getVocationInitials = (vocation: string): string => {
+    if (!vocation) return '';
+    
+    const vocationMap: { [key: string]: string } = {
+      'Knight': 'EK',
+      'Elite Knight': 'EK',
+      'Paladin': 'RP',
+      'Royal Paladin': 'RP',
+      'Sorcerer': 'MS',
+      'Master Sorcerer': 'MS',
+      'Druid': 'ED',
+      'Elder Druid': 'ED'
+    };
+
+    return vocationMap[vocation] || vocation.substring(0, 2).toUpperCase();
+  };
+
+  const renderPartySlots = (room: PartyRoom) => {
+    const slots = [];
+    const maxMembers = room.maxMembers;
+    
+    // Adicionar o líder como primeiro slot
+    slots.push(
+      <div key="leader" className="bg-orange-900/30 border border-orange-500/50 rounded-lg p-2">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+          {room.leaderCharacter ? (
+            <span className="text-xs text-white font-medium truncate">
+              {getVocationInitials(room.leaderCharacter.vocation || '')} ({room.leaderCharacter.level || 'N/A'}) {room.leaderCharacter.name || 'N/A'}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-300">Info N/A</span>
+          )}
+        </div>
+      </div>
+    );
+
+    // Adicionar slots dos membros (excluindo o líder)
+    const memberSlots = maxMembers - 1; // -1 porque o líder já ocupa um slot
+    const actualMembers = room.members ? room.members.length - 1 : 0; // -1 para excluir o líder da contagem
+    
+    for (let i = 0; i < memberSlots; i++) {
+      const isEmpty = i >= actualMembers; 
+      
+      if (isEmpty) {
+        // Slot vazio
+        slots.push(
+          <div key={`empty-${i}`} className="bg-gray-800/30 border border-gray-600/30 rounded-lg p-2 border-dashed">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+              <span className="text-xs text-gray-500">Vaga Livre</span>
+            </div>
+          </div>
+        );
+      } else {
+        // Slot ocupado - buscar dados do membro (i+1 porque o líder está na posição 0)
+        const memberId = room.members[i + 1];
+        const memberInfo = room.memberCharacters?.[memberId];
+        
+        // Tentar diferentes métodos para encontrar os dados do membro
+        let finalMemberInfo = memberInfo;
+        
+        if (!finalMemberInfo && room.memberCharacters) {
+          // Método alternativo: verificar se o memberId está em alguma chave
+          const foundKey = Object.keys(room.memberCharacters).find(key => 
+            key === memberId || key.includes(memberId) || memberId.includes(key)
+          );
+          if (foundKey) {
+            finalMemberInfo = room.memberCharacters[foundKey];
+          }
+        }
+        
+        slots.push(
+          <div key={`member-${i}`} className="bg-green-900/30 border border-green-500/50 rounded-lg p-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              {finalMemberInfo ? (
+                <span className="text-xs text-white font-medium truncate">
+                  {getVocationInitials(finalMemberInfo.characterVocation || '')} ({finalMemberInfo.characterLevel || 'N/A'}) {finalMemberInfo.characterName || 'N/A'}
+                </span>
+              ) : (
+                <span className="text-xs text-gray-300">Dados não encontrados</span>
+              )}
+            </div>
+          </div>
+        );
+      }
+    }
+
+    return slots;
+  };
+
+  const formatTime = (timestamp: any) => {
+    if (!timestamp) return 'Data não disponível';
+    try {
+      return timestamp.toDate().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'Data não disponível';
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -163,21 +268,60 @@ export default function MyRoomsPage() {
     }
   };
 
-  const getHuntTypeIcon = (type: string) => {
-    switch (type) {
-      case 'hunt': return <Swords className="h-4 w-4" />;
-      case 'quest': return <Trophy className="h-4 w-4" />;
-      case 'boss': return <Crown className="h-4 w-4" />;
-      default: return <Users className="h-4 w-4" />;
+  const handleRemoveMember = async (roomId: string, memberId: string) => {
+    if (!confirm('Tem certeza que deseja remover este membro da party?')) {
+      return;
+    }
+
+    try {
+      const roomRef = doc(db, 'rooms', roomId);
+      const roomDoc = await getDoc(roomRef);
+      const currentData = roomDoc.data();
+
+      if (!currentData) return;
+
+      // Remover o membro da lista de membros
+      const updatedMembers = currentData.members.filter((id: string) => id !== memberId);
+      
+      // Remover dados do personagem do membro
+      const updatedMemberCharacters = { ...currentData.memberCharacters };
+      delete updatedMemberCharacters[memberId];
+
+      await updateDoc(roomRef, {
+        members: updatedMembers,
+        memberCharacters: updatedMemberCharacters,
+        currentMembers: updatedMembers.length
+      });
+
+      console.log('Membro removido com sucesso');
+    } catch (error) {
+      console.error('Erro ao remover membro:', error);
+    }
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    if (!confirm('Tem certeza que deseja deletar esta sala? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      const roomRef = doc(db, 'rooms', roomId);
+      await deleteDoc(roomRef);
+      console.log('Sala deletada com sucesso');
+    } catch (error) {
+      console.error('Erro ao deletar sala:', error);
     }
   };
 
   const getHuntTypeColor = (type: string) => {
     switch (type) {
-      case 'hunt': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'quest': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'boss': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      case 'EXP Hunt': return 'text-red-400';
+      case 'Profit Hunt': return 'text-green-400';
+      case 'Boss Hunt': return 'text-purple-400';
+      case 'Quest': return 'text-blue-400';
+      case 'Task': return 'text-yellow-400';
+      case 'Bestiary': return 'text-pink-400';
+      default: return 'text-gray-400';
     }
   };
 
@@ -216,59 +360,42 @@ export default function MyRoomsPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {myRooms.map((room) => (
-              <Card key={room.id} className="bg-gray-900/50 border-gray-700 hover:border-gray-600 transition-colors">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-white text-lg">{room.title}</CardTitle>
-                      <p className="text-gray-400 text-sm mt-1">{room.description}</p>
-                    </div>
-                    <Badge className={`ml-2 ${getHuntTypeColor(room.huntType)}`}>
-                      <div className="flex items-center gap-1">
-                        {getHuntTypeIcon(room.huntType)}
-                        <span className="capitalize">{room.huntType}</span>
-                      </div>
-                    </Badge>
-                  </div>
+              <Card key={room.id} className="bg-black/30 border-white/20 backdrop-blur-sm hover:bg-black/40 transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center justify-between">
+                    <span>{room.title}</span>
+                    <span className="text-sm font-normal text-gray-300">
+                      {room.currentMembers}/{room.maxMembers}
+                    </span>
+                  </CardTitle>
                 </CardHeader>
-
-                <CardContent className="space-y-4">
-                  {/* Informações da sala */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-400">Level Range</p>
-                      <p className="text-white">{room.minLevel} - {room.maxLevel}</p>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center">
+                      <span className={`font-semibold ${getHuntTypeColor(room.huntType)}`}>{room.huntType}</span>
                     </div>
-                    <div>
-                      <p className="text-gray-400">Membros</p>
-                      <p className="text-white">{room.currentMembers}/{room.maxMembers}</p>
+                    
+                    {/* Seção de Vagas da Party */}
+                    <div className="bg-gray-900/30 border border-gray-600/30 rounded p-3 mb-3">
+                      <div className="flex items-center text-gray-300 mb-3">
+                        <Users className="h-3 w-3 mr-1" />
+                        <span className="text-xs font-medium">Membros ({room.currentMembers}/{room.maxMembers})</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                        {renderPartySlots(room)}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-400">Mundo</p>
-                      <p className="text-white">{room.world}</p>
+                    
+                    <div className="flex items-center text-gray-300">
+                      <span>Level {room.minLevel}+</span>
                     </div>
-                    <div>
-                      <p className="text-gray-400">Status</p>
-                      <Badge className={room.isActive ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}>
-                        {room.isActive ? 'Ativa' : 'Inativa'}
-                      </Badge>
+                    <div className="flex items-center text-gray-400 text-xs">
+                      <Calendar className="h-3 w-3 mr-2" />
+                      <span>Criado às {formatTime(room.createdAt)}</span>
                     </div>
                   </div>
 
-                  {/* Vocações necessárias */}
-                  {room.requiredVocations && room.requiredVocations.length > 0 && (
-                    <div>
-                      <p className="text-gray-400 text-sm mb-2">Vocações necessárias:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {room.requiredVocations.map((vocation) => (
-                          <Badge key={vocation} className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
-                            {vocation}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
+                  
                   {/* Solicitações pendentes */}
                   {room.joinRequests && room.joinRequests.length > 0 && (
                     <div className="border-t border-gray-700 pt-4">
@@ -324,11 +451,54 @@ export default function MyRoomsPage() {
                       </div>
                     </div>
                   )}
+                  
+                  {/* Gerenciamento de Membros */}
+                  {room.members && room.members.length > 1 && (
+                    <div className="border-t border-gray-700 pt-4">
+                      <p className="text-blue-400 text-sm font-medium mb-3">
+                        Gerenciar Membros
+                      </p>
+                      <div className="space-y-2">
+                        {room.members.slice(1).map((memberId, index) => {
+                          const memberInfo = room.memberCharacters?.[memberId];
+                          return (
+                            <div key={memberId} className="flex items-center justify-between bg-gray-800/30 rounded-lg p-2">
+                              <div className="flex-1">
+                                {memberInfo ? (
+                                  <span className="text-sm text-white">
+                                    {getVocationInitials(memberInfo.characterVocation || '')} ({memberInfo.characterLevel || 'N/A'}) {memberInfo.characterName || 'N/A'}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-gray-400">Membro {index + 1}</span>
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRemoveMember(room.id, memberId)}
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/20 px-2 py-1 h-7"
+                              >
+                                <UserMinus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-                  {/* Data de criação */}
-                  <div className="flex items-center gap-2 text-gray-400 text-xs pt-2 border-t border-gray-700">
-                    <Calendar className="h-3 w-3" />
-                    <span>Criada em {room.createdAt?.toDate?.()?.toLocaleDateString() || 'Data não disponível'}</span>
+                  {/* Ações da Sala */}
+                  <div className="border-t border-gray-700 pt-4">
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleDeleteRoom(room.id)}
+                        variant="outline"
+                        className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Deletar Sala
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
