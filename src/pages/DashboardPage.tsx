@@ -3,13 +3,14 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut } from 'firebase/auth';
 import { collection, query, onSnapshot, doc, getDoc, orderBy, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { fetchBosses, fetchCreatures, type Boss, type Creature } from '../lib/tibia-api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { CreateRoomModal } from '../components/CreateRoomModal';
 import { JoinRequestModal } from '../components/JoinRequestModal';
-import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, CheckCircle } from 'lucide-react';
+import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, CheckCircle, Scroll } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Interface local para resolver problema de importação
@@ -17,7 +18,9 @@ interface PartyRoom {
   id: string;
   title: string;
   description: string;
-  huntType: string;
+  huntType?: string; // Deprecated - mantido para compatibilidade
+  activityType?: string;
+  selectedTargets?: string[];
   minLevel: number;
   maxLevel: number;
   maxMembers: number;
@@ -59,6 +62,10 @@ export default function DashboardPage() {
   const [rooms, setRooms] = useState<PartyRoom[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<PartyRoom[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // Estados para dados da API
+  const [bosses, setBosses] = useState<Boss[]>([]);
+  const [creatures, setCreatures] = useState<Creature[]>([]);
   
   // Estados dos filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -139,6 +146,51 @@ export default function DashboardPage() {
     }
   }, [user]);
 
+  // Carregar dados da API do Tibia
+  useEffect(() => {
+    const loadTibiaData = async () => {
+      try {
+        const [bossesData, creaturesData] = await Promise.all([
+          fetchBosses(),
+          fetchCreatures()
+        ]);
+        setBosses(bossesData);
+        setCreatures(creaturesData);
+      } catch (error) {
+        console.error('Erro ao carregar dados da API do Tibia:', error);
+      }
+    };
+
+    loadTibiaData();
+  }, []);
+
+  // Função para obter a URL da imagem de uma criatura/boss
+  const getTargetImageUrl = (targetName: string, activityType: string): string | null => {
+    console.log(`Buscando imagem para: "${targetName}" (tipo: ${activityType})`);
+    
+    if (activityType === 'boss') {
+      const boss = bosses.find(b => b.name.toLowerCase() === targetName.toLowerCase());
+      console.log(`Boss encontrado:`, boss);
+      return boss?.image_url || null;
+    } else if (activityType === 'hunt') {
+      const creature = creatures.find(c => c.name.toLowerCase() === targetName.toLowerCase());
+      console.log(`Criatura encontrada:`, creature);
+      console.log(`Total de criaturas carregadas:`, creatures.length);
+      
+      // Log das primeiras criaturas para debug
+      if (creatures.length > 0) {
+        console.log('Primeiras 5 criaturas:', creatures.slice(0, 5).map(c => c.name));
+        
+        // Buscar criaturas que contenham "cobra" no nome
+        const cobraCreatures = creatures.filter(c => c.name.toLowerCase().includes('cobra'));
+        console.log('Criaturas com "cobra" no nome:', cobraCreatures.map(c => c.name));
+      }
+      
+      return creature?.image_url || null;
+    }
+    return null;
+  };
+
   // Efeito para filtrar salas
   useEffect(() => {
     let filtered = rooms;
@@ -153,9 +205,10 @@ export default function DashboardPage() {
 
     // Filtro por tipo
     if (filterType !== 'all') {
-      filtered = filtered.filter(room => 
-        room.huntType.toLowerCase() === filterType.toLowerCase()
-      );
+      filtered = filtered.filter(room => {
+        const roomType = room.activityType || room.huntType || '';
+        return roomType.toLowerCase() === filterType.toLowerCase();
+      });
     }
 
     // Filtro por level
@@ -546,9 +599,51 @@ export default function DashboardPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {/* Exibição dos GIFs das criaturas/bosses selecionados */}
+                  {room.activityType && room.selectedTargets && room.selectedTargets.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center text-gray-300 mb-2">
+                        <span className="text-xs font-medium">
+                          {room.activityType === 'boss' ? 'Bosses:' : 
+                           room.activityType === 'hunt' ? 'Criaturas:' : 'Quests:'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {room.selectedTargets.map((target, index) => {
+                          const imageUrl = getTargetImageUrl(target, room.activityType!);
+                          return (
+                            <div key={index} className="flex flex-col items-center bg-gray-900/40 rounded p-2">
+                              {room.activityType === 'quest' ? (
+                                <div className="w-12 h-12 bg-yellow-600/20 border border-yellow-600/30 rounded flex items-center justify-center">
+                                  <Scroll className="w-6 h-6 text-yellow-400" />
+                                </div>
+                              ) : imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt={target}
+                                  className="w-12 h-12 object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-gray-600 rounded flex items-center justify-center">
+                                  <span className="text-sm text-gray-300">?</span>
+                                </div>
+                              )}
+                              <span className="text-xs text-gray-300 mt-1 max-w-20 truncate" title={target}>
+                                {target}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center text-yellow-400">
-                      <span className="font-semibold">{room.huntType}</span>
+                      <span className="font-semibold">{room.activityType || room.huntType}</span>
                     </div>
                     
                     {/* Seção de Vagas da Party */}

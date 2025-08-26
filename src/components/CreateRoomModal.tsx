@@ -1,24 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { searchCharacter } from '../lib/tibia-api';
+import { searchCharacter, fetchBosses, fetchCreatures, TIBIA_QUESTS, type Boss, type Creature } from '../lib/tibia-api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Card, CardContent } from './ui/card';
-import { User, Search, Loader2 } from 'lucide-react';
+import { User, Search, Loader2, X, Plus } from 'lucide-react';
 
-const HUNT_TYPES = [
-  'EXP Hunt',
-  'Profit Hunt',
-  'Boss Hunt',
-  'Quest',
-  'Task',
-  'Bestiary',
-  'Outros'
-];
+const ACTIVITY_TYPES = ['boss', 'hunt', 'quest'];
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -28,7 +20,8 @@ interface CreateRoomModalProps {
 export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [user] = useAuthState(auth);
   const [title, setTitle] = useState('');
-  const [huntType, setHuntType] = useState('');
+  const [activityType, setActivityType] = useState('');
+  const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [minLevel, setMinLevel] = useState('');
   const [maxMembers, setMaxMembers] = useState('4');
   const [loading, setLoading] = useState(false);
@@ -38,6 +31,39 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [leaderData, setLeaderData] = useState<any>(null);
   const [searchingLeader, setSearchingLeader] = useState(false);
   const [leaderError, setLeaderError] = useState('');
+
+  // Estados para dados da API
+  const [bosses, setBosses] = useState<Boss[]>([]);
+  const [creatures, setCreatures] = useState<Creature[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Buscar dados da API quando o tipo de atividade mudar
+  useEffect(() => {
+    const loadActivityData = async () => {
+      if (activityType === 'boss' && bosses.length === 0) {
+        setLoadingData(true);
+        const bossData = await fetchBosses();
+        setBosses(bossData);
+        setLoadingData(false);
+      } else if (activityType === 'hunt' && creatures.length === 0) {
+        setLoadingData(true);
+        const creatureData = await fetchCreatures();
+        setCreatures(creatureData);
+        setLoadingData(false);
+      }
+    };
+
+    if (activityType) {
+      loadActivityData();
+    }
+  }, [activityType, bosses.length, creatures.length]);
+
+  // Limpar seleções quando mudar tipo de atividade
+  useEffect(() => {
+    setSelectedTargets([]);
+    setSearchTerm('');
+  }, [activityType]);
 
   const handleSearchLeader = async () => {
     if (!leaderName.trim()) {
@@ -63,6 +89,37 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
     }
 
     setSearchingLeader(false);
+  };
+
+  const handleAddTarget = (targetName: string) => {
+    if (!selectedTargets.includes(targetName)) {
+      setSelectedTargets([...selectedTargets, targetName]);
+    }
+    setSearchTerm('');
+  };
+
+  const handleRemoveTarget = (targetName: string) => {
+    setSelectedTargets(selectedTargets.filter(t => t !== targetName));
+  };
+
+  const getFilteredTargets = () => {
+    let targets: string[] = [];
+    
+    if (activityType === 'boss') {
+      targets = bosses.map(boss => boss.name);
+    } else if (activityType === 'hunt') {
+      targets = creatures.map(creature => creature.name);
+    } else if (activityType === 'quest') {
+      targets = TIBIA_QUESTS;
+    }
+
+    if (searchTerm.trim()) {
+      return targets.filter(target => 
+        target.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return targets.slice(0, 20); // Limitar para performance
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +149,8 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
 
       await addDoc(collection(db, 'rooms'), {
         title,
-        huntType,
+        activityType,
+        selectedTargets,
         minLevel: parseInt(minLevel),
         maxMembers: parseInt(maxMembers),
         currentMembers: 1,
@@ -112,7 +170,8 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
 
       // Reset form
       setTitle('');
-      setHuntType('');
+      setActivityType('');
+      setSelectedTargets([]);
       setMinLevel('');
       setMaxMembers('4');
       setLeaderName('');
@@ -195,19 +254,91 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
           </div>
 
           <div>
-            <Select value={huntType} onValueChange={setHuntType}>
+            <Select value={activityType} onValueChange={setActivityType}>
               <SelectTrigger className="bg-black/20 border-white/20 text-white">
-                <SelectValue placeholder="Tipo de Hunt" />
+                <SelectValue placeholder="Tipo de Atividade" />
               </SelectTrigger>
               <SelectContent className="bg-black/90 border-white/20">
-                {HUNT_TYPES.map((type) => (
+                {ACTIVITY_TYPES.map((type) => (
                   <SelectItem key={type} value={type} className="text-white hover:bg-white/10">
-                    {type}
+                    {type === 'boss' ? 'Boss' : type === 'hunt' ? 'Hunt' : 'Quest'}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
+          {/* Campo dinâmico para seleção de targets */}
+          {activityType && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                {activityType === 'boss' ? 'Bosses' : 
+                 activityType === 'hunt' ? 'Criaturas' : 'Quests'}
+              </label>
+              
+              {/* Campo de busca */}
+              <div className="mb-3">
+                <Input
+                  placeholder={`Buscar ${activityType === 'boss' ? 'boss' : 
+                                         activityType === 'hunt' ? 'criatura' : 'quest'}...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
+                />
+              </div>
+
+              {/* Lista de selecionados */}
+              {selectedTargets.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-sm text-gray-300 mb-2">Selecionados:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTargets.map((target) => (
+                      <div
+                        key={target}
+                        className="bg-yellow-600/20 border border-yellow-600/30 rounded px-2 py-1 flex items-center gap-2"
+                      >
+                        <span className="text-yellow-300 text-sm">{target}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTarget(target)}
+                          className="text-yellow-300 hover:text-red-300 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Lista de opções disponíveis */}
+              {!loadingData && activityType && (
+                <div className="max-h-32 overflow-y-auto border border-white/20 rounded bg-black/20">
+                  {getFilteredTargets().map((target) => (
+                    <button
+                      key={target}
+                      type="button"
+                      onClick={() => handleAddTarget(target)}
+                      disabled={selectedTargets.includes(target)}
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+                    >
+                      <span>{target}</span>
+                      {!selectedTargets.includes(target) && (
+                        <Plus className="h-4 w-4 text-green-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {loadingData && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                  <span className="ml-2 text-gray-400">Carregando...</span>
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <Input
