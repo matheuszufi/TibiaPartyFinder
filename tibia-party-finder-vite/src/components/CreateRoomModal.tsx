@@ -10,13 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Card, CardContent } from './ui/card';
 import { User, Search, Loader2 } from 'lucide-react';
 
-const VOCATIONS = [
-  'Druid',
-  'Knight', 
-  'Paladin',
-  'Sorcerer'
-];
-
 const HUNT_TYPES = [
   'EXP Hunt',
   'Profit Hunt',
@@ -35,12 +28,10 @@ interface CreateRoomModalProps {
 export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [user] = useAuthState(auth);
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [huntType, setHuntType] = useState('');
   const [minLevel, setMinLevel] = useState('');
   const [maxLevel, setMaxLevel] = useState('');
   const [maxMembers, setMaxMembers] = useState('4');
-  const [requiredVocations, setRequiredVocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   
   // Estados para busca de personagem
@@ -75,14 +66,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
     setSearchingLeader(false);
   };
 
-  const handleVocationToggle = (vocation: string) => {
-    setRequiredVocations(prev =>
-      prev.includes(vocation)
-        ? prev.filter(v => v !== vocation)
-        : [...prev, vocation]
-    );
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -97,13 +80,11 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
     try {
       await addDoc(collection(db, 'rooms'), {
         title,
-        description,
         huntType,
         minLevel: parseInt(minLevel),
         maxLevel: parseInt(maxLevel),
         maxMembers: parseInt(maxMembers),
         currentMembers: 1,
-        requiredVocations,
         world: leaderData.world,
         createdBy: user.uid,
         createdAt: new Date(),
@@ -120,12 +101,10 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
 
       // Reset form
       setTitle('');
-      setDescription('');
       setHuntType('');
       setMinLevel('');
       setMaxLevel('');
       setMaxMembers('4');
-      setRequiredVocations([]);
       setLeaderName('');
       setLeaderData(null);
       setLeaderError('');
@@ -206,16 +185,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
           </div>
 
           <div>
-            <Input
-              placeholder="Descrição (ex: local da hunt)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              className="bg-black/20 border-white/20 text-white placeholder:text-gray-400"
-            />
-          </div>
-
-          <div>
             <Select value={huntType} onValueChange={setHuntType}>
               <SelectTrigger className="bg-black/20 border-white/20 text-white">
                 <SelectValue placeholder="Tipo de Hunt" />
@@ -266,28 +235,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div>
-            <p className="text-sm text-gray-300 mb-2">Vocações desejadas (opcional):</p>
-            <div className="grid grid-cols-2 gap-2">
-              {VOCATIONS.map((vocation) => (
-                <Button
-                  key={vocation}
-                  type="button"
-                  variant={requiredVocations.includes(vocation) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleVocationToggle(vocation)}
-                  className={
-                    requiredVocations.includes(vocation)
-                      ? "bg-yellow-600 hover:bg-yellow-700 text-black"
-                      : "bg-transparent border-white/20 text-white hover:bg-white/10"
-                  }
-                >
-                  {vocation}
-                </Button>
-              ))}
-            </div>
           </div>
 
           <DialogFooter>

@@ -8,7 +8,9 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { CreateRoomModal } from '../components/CreateRoomModal';
-import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter } from 'lucide-react';
+import { JoinRequestModal } from '../components/JoinRequestModal';
+import { Sword, LogOut, Plus, Users, Clock, MapPin, Search, Filter, Eye, UserPlus, Crown, UserCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Interface local para resolver problema de importação
 interface PartyRoom {
@@ -26,6 +28,23 @@ interface PartyRoom {
   createdAt: any; // Firebase Timestamp
   members: string[];
   isActive: boolean;
+  memberCharacters?: { [userId: string]: {
+    characterName: string;
+    characterLevel?: number;
+    characterVocation?: string;
+    characterGuild?: string | null;
+    characterWorld?: string;
+  }};
+  joinRequests?: Array<{
+    userId: string;
+    characterName: string;
+    characterLevel?: number;
+    characterVocation?: string;
+    characterGuild?: string | null;
+    characterWorld?: string;
+    requestedAt: any;
+    userEmail: string;
+  }>;
   leaderCharacter?: {
     name: string;
     level: number;
@@ -46,6 +65,10 @@ export default function DashboardPage() {
   const [filterType, setFilterType] = useState('all');
   const [filterLevel, setFilterLevel] = useState('all-levels');
   const [filterWorld, setFilterWorld] = useState('all');
+
+  // Estados para modal de solicitação
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     console.log('DashboardPage useEffect - user:', user);
@@ -94,10 +117,21 @@ export default function DashboardPage() {
       );
       
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const roomsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as PartyRoom[];
+        const roomsData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log(`=== ROOM ${doc.id} FIREBASE DATA ===`);
+          console.log('Full raw data:', data);
+          console.log('memberCharacters field:', data.memberCharacters);
+          console.log('memberCharacters type:', typeof data.memberCharacters);
+          console.log('All field keys:', Object.keys(data));
+          console.log('members field:', data.members);
+          console.log('================================');
+          return {
+            id: doc.id,
+            ...data
+          };
+        }) as PartyRoom[];
+        console.log('Final rooms array:', roomsData);
         setRooms(roomsData);
       });
 
@@ -160,6 +194,125 @@ export default function DashboardPage() {
     });
   };
 
+  const handleJoinRequest = (roomId: string, roomTitle: string) => {
+    setSelectedRoom({ id: roomId, title: roomTitle });
+    setShowJoinModal(true);
+  };
+
+  const handleViewParty = (_roomId: string) => {
+    // Navegar para página "Minhas Salas" ou mostrar detalhes da party
+    window.location.href = '/my-rooms';
+  };
+
+  const hasUserRequestedJoin = (room: PartyRoom) => {
+    if (!user?.uid || !room.joinRequests) return false;
+    return room.joinRequests.some(request => request.userId === user.uid);
+  };
+
+  const isUserMember = (room: PartyRoom) => {
+    if (!user?.uid || !room.members) return false;
+    return room.members.includes(user.uid);
+  };
+
+  const renderPartySlots = (room: PartyRoom) => {
+    const slots = [];
+    const maxMembers = room.maxMembers;
+    
+    console.log('Rendering party slots for room:', room.id, {
+      members: room.members,
+      memberCharacters: room.memberCharacters,
+      currentMembers: room.currentMembers
+    });
+    
+    // Adicionar o líder como primeiro item da lista
+    slots.push(
+      <div key="leader" className="flex items-center justify-between py-1 px-2 bg-orange-900/20 border border-orange-500/30 rounded text-xs">
+        <div className="flex items-center gap-2">
+          <Crown className="h-3 w-3 text-orange-400" />
+          <span className="text-orange-300 font-medium">Líder</span>
+        </div>
+        {room.leaderCharacter ? (
+          <div className="text-right text-white">
+            <div className="font-medium">{room.leaderCharacter.name}</div>
+            <div className="text-gray-300 text-[10px]">
+              Lv.{room.leaderCharacter.level} {room.leaderCharacter.vocation}
+            </div>
+            <div className="text-gray-400 text-[9px]">
+              {room.leaderCharacter.guild 
+                ? (typeof room.leaderCharacter.guild === 'string' 
+                   ? room.leaderCharacter.guild 
+                   : (room.leaderCharacter.guild as any)?.name || '(NEUTRAL)')
+                : '(NEUTRAL)'
+              }
+            </div>
+          </div>
+        ) : (
+          <div className="text-gray-300 text-xs">Info N/A</div>
+        )}
+      </div>
+    );
+
+    // Adicionar membros aprovados (excluindo o líder)
+    const allMembers = room.members ? room.members : [];
+    const membersWithoutLeader = allMembers.filter(memberId => memberId !== room.createdBy);
+    
+    console.log('Processando membros:', {
+      allMembers,
+      createdBy: room.createdBy,
+      membersWithoutLeader
+    });
+
+    membersWithoutLeader.forEach((memberId, index) => {
+      const memberInfo = room.memberCharacters?.[memberId];
+      
+      console.log(`Member ${index + 1}:`, {
+        memberId,
+        memberInfo,
+        allMemberCharacters: room.memberCharacters
+      });
+
+      slots.push(
+        <div key={`member-${memberId}`} className="flex items-center justify-between py-1 px-2 bg-green-900/20 border border-green-500/30 rounded text-xs">
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-3 w-3 text-green-400" />
+            <span className="text-green-300 font-medium">Membro {index + 1}</span>
+          </div>
+          {memberInfo ? (
+            <div className="text-right text-white">
+              <div className="font-medium">{memberInfo.characterName}</div>
+              <div className="text-gray-300 text-[10px]">
+                {memberInfo.characterLevel ? `Lv.${memberInfo.characterLevel}` : 'N/A'} {memberInfo.characterVocation || ''}
+              </div>
+              <div className="text-gray-400 text-[9px]">
+                {memberInfo.characterGuild || '(NEUTRAL)'}
+              </div>
+            </div>
+          ) : (
+            <div className="text-red-400 text-[10px]">Dados não encontrados</div>
+          )}
+        </div>
+      );
+    });
+
+    // Adicionar vagas livres
+    const occupiedSlots = slots.length;
+    const emptySlots = maxMembers - occupiedSlots;
+    
+    for (let i = 0; i < emptySlots; i++) {
+      slots.push(
+        <div key={`empty-${i}`} className="flex items-center justify-between py-1 px-2 bg-gray-800/20 border border-gray-600/20 rounded text-xs border-dashed">
+          <div className="flex items-center gap-2">
+            <Users className="h-3 w-3 text-gray-500" />
+            <span className="text-gray-500">Vaga Livre</span>
+          </div>
+          <div className="text-gray-500 text-[10px]">Aguardando</div>
+        </div>
+      );
+    }
+
+    return slots;
+  };
+
   if (!userData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -185,14 +338,25 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            className="text-white hover:bg-white/10"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-3">
+            <Link to="/my-rooms">
+              <Button
+                variant="outline"
+                className="text-white border-white/20 hover:bg-white/10"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Minhas Salas
+              </Button>
+            </Link>
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -338,6 +502,17 @@ export default function DashboardPage() {
                       </div>
                     )}
                     
+                    {/* Seção de Vagas da Party */}
+                    <div className="bg-gray-900/30 border border-gray-600/30 rounded p-3 mb-3">
+                      <div className="flex items-center text-gray-300 mb-3">
+                        <Users className="h-3 w-3 mr-1" />
+                        <span className="text-xs font-medium">Membros ({room.currentMembers}/{room.maxMembers})</span>
+                      </div>
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {renderPartySlots(room)}
+                      </div>
+                    </div>
+                    
                     <div className="flex items-center text-gray-300">
                       <MapPin className="h-4 w-4 mr-2" />
                       <span>{room.world}</span>
@@ -357,12 +532,44 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="mt-4">
-                    <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      disabled={room.currentMembers >= room.maxMembers}
-                    >
-                      {room.currentMembers >= room.maxMembers ? 'Party Cheia' : 'Entrar na Party'}
-                    </Button>
+                    {room.createdBy === user?.uid ? (
+                      // Botão para o criador da sala
+                      <Button 
+                        onClick={() => handleViewParty(room.id)}
+                        className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver Party
+                      </Button>
+                    ) : isUserMember(room) ? (
+                      // Botão quando já é membro
+                      <Button 
+                        disabled
+                        className="w-full bg-green-600/50 text-green-200 cursor-not-allowed"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Você está na Party
+                      </Button>
+                    ) : hasUserRequestedJoin(room) ? (
+                      // Botão quando já solicitou entrada
+                      <Button 
+                        disabled
+                        className="w-full bg-yellow-600/50 text-yellow-200 cursor-not-allowed"
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                        Aguardando Resposta do Líder
+                      </Button>
+                    ) : (
+                      // Botão para solicitar entrada
+                      <Button 
+                        onClick={() => handleJoinRequest(room.id, room.title)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        disabled={room.currentMembers >= room.maxMembers}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        {room.currentMembers >= room.maxMembers ? 'Party Cheia' : 'Solicitar Entrada'}
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -375,6 +582,18 @@ export default function DashboardPage() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       />
+
+      {selectedRoom && (
+        <JoinRequestModal
+          isOpen={showJoinModal}
+          onClose={() => {
+            setShowJoinModal(false);
+            setSelectedRoom(null);
+          }}
+          roomId={selectedRoom.id}
+          roomTitle={selectedRoom.title}
+        />
+      )}
     </div>
   );
 }

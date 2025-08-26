@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import MyRoomsPage from './pages/MyRoomsPage';
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -36,6 +37,10 @@ function App() {
           <Route 
             path="/dashboard" 
             element={user ? <DashboardPage /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/my-rooms" 
+            element={user ? <MyRoomsPage /> : <Navigate to="/login" />} 
           />
         </Routes>
       </div>
