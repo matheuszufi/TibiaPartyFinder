@@ -72,18 +72,18 @@ export const PremiumPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header style={{ backgroundColor: 'rgb(17, 24, 31)' }}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link to="/profile">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-gray-700">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar ao Perfil
               </Button>
             </Link>
             <div className="flex items-center gap-2">
-              <Crown className="h-6 w-6 text-yellow-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Exiva Premium</h1>
+              <Crown className="h-6 w-6 text-yellow-400" />
+              <h1 className="text-2xl font-bold text-white">Exiva Premium</h1>
             </div>
           </div>
         </div>

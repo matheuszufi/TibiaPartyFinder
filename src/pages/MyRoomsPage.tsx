@@ -534,26 +534,26 @@ export default function MyRoomsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header style={{ backgroundColor: 'rgb(17, 24, 31)' }}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-gray-700">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar ao Dashboard
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Minhas Parties</h1>
-                <p className="text-sm text-gray-600">Salas criadas por você e parties que você participa</p>
+                <h1 className="text-xl font-bold text-white">Minhas Parties</h1>
+                <p className="text-sm text-gray-300">Salas criadas por você e parties que você participa</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Link to="/profile">
                 <Button
                   variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
                 >
                   <User className="h-4 w-4 mr-2" />
                   Perfil

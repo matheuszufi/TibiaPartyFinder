@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useEffect } from 'react';
 import { auth } from './lib/firebase';
+import { handleRedirectResult } from './lib/auth';
 import { useRoomCleanup } from './hooks/useRoomCleanup';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -15,6 +17,11 @@ function App() {
   
   // Ativar limpeza automática de salas expiradas
   useRoomCleanup();
+
+  // Lidar com resultado de redirecionamento do Google
+  useEffect(() => {
+    handleRedirectResult();
+  }, []);
 
   if (loading) {
     return (

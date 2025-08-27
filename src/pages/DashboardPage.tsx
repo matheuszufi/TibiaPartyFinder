@@ -449,7 +449,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header style={{ backgroundColor: 'rgb(17, 24, 31)' }}>
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className="p-1 rounded-lg flex items-center justify-center">
@@ -460,7 +460,7 @@ export default function DashboardPage() {
             <Link to="/my-rooms">
               <Button
                 variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:border-white/40"
               >
                 <Users className="h-4 w-4 mr-2" />
                 Minhas Salas
@@ -469,7 +469,7 @@ export default function DashboardPage() {
             <Link to="/profile">
               <Button
                 variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:border-white/40"
               >
                 <User className="h-4 w-4 mr-2" />
                 Perfil
@@ -478,7 +478,7 @@ export default function DashboardPage() {
             <Button
               onClick={handleLogout}
               variant="ghost"
-              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              className="text-white hover:bg-white/10"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sair
@@ -486,10 +486,10 @@ export default function DashboardPage() {
           </div>
         </div>
         {/* User Info Bar */}
-        <div className="bg-gray-50 border-t border-gray-200">
+        <div className="bg-gray-700 border-t border-gray-500">
           <div className="container mx-auto px-4 py-2">
-            <p className="text-sm text-gray-700 text-center">
-              <span className="font-medium">{userData.characterName}</span> - Level {userData.level} {userData.vocation} ({userData.world})
+            <p className="text-sm text-gray-200 text-center">
+              <span className="font-medium text-white">{userData.characterName}</span> - Level {userData.level} {userData.vocation} ({userData.world})
             </p>
           </div>
         </div>

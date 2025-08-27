@@ -16,6 +16,7 @@ interface UserData {
   vocation: string;
   world: string;
   isPremium: boolean;
+  premiumEndDate?: any; // Firebase Timestamp
   guild?: string;
   email: string;
 }
@@ -40,6 +41,25 @@ export const ProfilePage = () => {
     confirm: false
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Function to calculate remaining premium days
+  const calculatePremiumDaysRemaining = (): number | null => {
+    if (!userData?.isPremium || !userData?.premiumEndDate) {
+      return null;
+    }
+
+    try {
+      const expirationDate = userData.premiumEndDate.toDate();
+      const currentDate = new Date();
+      const diffTime = expirationDate.getTime() - currentDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      return diffDays > 0 ? diffDays : 0;
+    } catch (error) {
+      console.error('Error calculating premium days:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -176,19 +196,19 @@ export const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header style={{ backgroundColor: 'rgb(17, 24, 31)' }}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-gray-700">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar ao Dashboard
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Meu Perfil</h1>
-                <p className="text-sm text-gray-600">Gerencie suas informações</p>
+                <h1 className="text-xl font-bold text-white">Meu Perfil</h1>
+                <p className="text-sm text-gray-300">Gerencie suas informações</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -353,7 +373,40 @@ export const ProfilePage = () => {
                   {userData.isPremium ? (
                     <>
                       <Crown className="h-5 w-5 text-yellow-500" />
-                      <span className="font-medium text-gray-900">Conta Premium</span>
+                      <div className="flex-1">
+                        <span className="font-medium text-gray-900">Conta Premium</span>
+                        {(() => {
+                          const daysRemaining = calculatePremiumDaysRemaining();
+                          if (daysRemaining !== null) {
+                            if (daysRemaining > 0) {
+                              return (
+                                <div className="text-sm">
+                                  <span className="text-green-600 font-medium">
+                                    {daysRemaining} {daysRemaining === 1 ? 'dia restante' : 'dias restantes'}
+                                  </span>
+                                  {userData.premiumEndDate && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      Expira em: {userData.premiumEndDate.toDate().toLocaleDateString('pt-BR')}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="text-sm">
+                                  <span className="text-red-600 font-medium">Expirado</span>
+                                  {userData.premiumEndDate && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      Expirou em: {userData.premiumEndDate.toDate().toLocaleDateString('pt-BR')}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
+                      </div>
                     </>
                   ) : (
                     <>
@@ -364,7 +417,15 @@ export const ProfilePage = () => {
                 </div>
                 <p className="text-xs text-gray-600 mt-1">
                   {userData.isPremium 
-                    ? "Você pode criar salas ilimitadas e agendar parties"
+                    ? (() => {
+                        const daysRemaining = calculatePremiumDaysRemaining();
+                        if (daysRemaining !== null && daysRemaining > 0) {
+                          return "Você pode criar salas ilimitadas e agendar parties";
+                        } else if (daysRemaining === 0) {
+                          return "Sua conta premium expirou. Renove para continuar com os benefícios.";
+                        }
+                        return "Você pode criar salas ilimitadas e agendar parties";
+                      })()
                     : "Você pode criar 1 sala por dia"
                   }
                 </p>

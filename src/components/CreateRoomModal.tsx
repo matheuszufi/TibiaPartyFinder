@@ -25,7 +25,7 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [activityType, setActivityType] = useState('');
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [minLevel, setMinLevel] = useState('');
-  const [maxMembers, setMaxMembers] = useState('4');
+  const [maxMembers, setMaxMembers] = useState('5');
   const [loading, setLoading] = useState(false);
   
   // Estados para busca de personagem
@@ -180,7 +180,7 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
       setActivityType('');
       setSelectedTargets([]);
       setMinLevel('');
-      setMaxMembers('4');
+      setMaxMembers('5');
       setLeaderName('');
       setLeaderData(null);
       setLeaderError('');
