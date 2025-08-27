@@ -3,6 +3,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { searchCharacter } from '../lib/tibia-api';
+import { useToast } from '../contexts/ToastContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -58,6 +59,9 @@ export default function MyRoomsPage() {
   const [user] = useAuthState(auth);
   const [myRooms, setMyRooms] = useState<(PartyRoom & { isOwner: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Hook para notificações toast
+  const { showRoomCompleteNotification } = useToast();
   
   // Estados para modal de adicionar membro
   const [addMemberModal, setAddMemberModal] = useState<{ isOpen: boolean; roomId: string }>({ isOpen: false, roomId: '' });
@@ -280,17 +284,29 @@ export default function MyRoomsPage() {
 
       console.log('memberCharacters após merge:', newMemberCharacters);
 
+      // Calcular novo número de membros
+      const newCurrentMembers = (currentData?.currentMembers || 0) + 1;
+      const maxMembers = currentData?.maxMembers || 4;
+
       // Fazer a atualização
       const updates = {
         members: arrayUnion(request.userId),
         memberCharacters: newMemberCharacters,
         joinRequests: arrayRemove(request),
-        currentMembers: (currentData?.currentMembers || 0) + 1
+        currentMembers: newCurrentMembers
       };
 
       console.log('Updates finais a serem aplicados:', updates);
 
       await updateDoc(roomRef, updates);
+
+      // Verificar se a sala ficou completa após esta aprovação
+      if (newCurrentMembers >= maxMembers) {
+        console.log(`🎉 Sala "${currentData?.title}" agora está completa! (${newCurrentMembers}/${maxMembers})`);
+        
+        // Mostrar notificação toast
+        showRoomCompleteNotification(currentData?.title || 'Party');
+      }
 
       // Verificar se foi salvo corretamente
       const verifyDoc = await getDoc(roomRef);

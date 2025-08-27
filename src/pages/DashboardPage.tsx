@@ -5,7 +5,8 @@ import { collection, query, onSnapshot, doc, getDoc, orderBy, updateDoc, limit }
 import { auth, db } from '../lib/firebase';
 import { fetchBosses, fetchCreatures, getWorlds, type Boss, type Creature, type World } from '../lib/tibia-api';
 import { formatTimeRemaining } from '../utils/roomExpiration';
-import { DisplayAd } from '../components/SimpleAd';
+import { useRoomCompletionMonitor } from '../hooks/useRoomCompletionMonitor';
+import { SafeAdSense } from '../components/SafeAdSense';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -68,6 +69,9 @@ export default function DashboardPage() {
   const [rooms, setRooms] = useState<PartyRoom[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<PartyRoom[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // Ativar monitor de notificações para salas completas
+  useRoomCompletionMonitor();
   
   // Estados para dados da API
   const [bosses, setBosses] = useState<Boss[]>([]);
@@ -497,10 +501,16 @@ export default function DashboardPage() {
       </header>
 
       {/* Anúncio abaixo do header */}
-      <div className="bg-white border-b border-gray-200 py-4">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-xs text-gray-500 mb-2">PUBLICIDADE</p>
-          <DisplayAd width={300} height={250} className="mx-auto" />
+      <div className="bg-white border-b border-gray-200 py-6">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-3">PUBLICIDADE</p>
+              <div className="flex justify-center items-center min-w-[300px] min-h-[250px]">
+                <SafeAdSense width={300} height={250} format="rectangle" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

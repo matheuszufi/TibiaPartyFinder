@@ -164,6 +164,7 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
         world: leaderData.world,
         createdBy: user.uid,
         createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // Expira em 1 hora
         members: [user.uid],
         isActive: true,
         // Dados do líder
