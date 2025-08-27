@@ -1,9 +1,18 @@
 {
   "public": true,
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/ads.txt",
       "destination": "/ads.txt"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api|_next|static|assets|images|favicon.ico|ads.txt).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -17,6 +26,23 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     }
