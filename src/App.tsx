@@ -7,6 +7,7 @@ import { useRoomCleanup } from './hooks/useRoomCleanup';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import EmailVerificationPage from './pages/EmailVerificationPage';
 import DashboardPage from './pages/DashboardPage';
 import MyRoomsPage from './pages/MyRoomsPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -22,6 +23,21 @@ function App() {
   useEffect(() => {
     handleRedirectResult();
   }, []);
+
+  // Componente para proteger rotas que precisam de email verificado
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!user) {
+      return <Navigate to="/login" />;
+    }
+    
+    // Se o usuário fez login com Google, o email já é considerado verificado
+    if (user.providerData[0]?.providerId === 'google.com' || user.emailVerified) {
+      return <>{children}</>;
+    }
+    
+    // Se o email não foi verificado, redirecionar para página de verificação
+    return <Navigate to="/verify-email" />;
+  };
 
   if (loading) {
     return (
@@ -50,20 +66,40 @@ function App() {
             element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} 
           />
           <Route 
+            path="/verify-email" 
+            element={user ? <EmailVerificationPage /> : <Navigate to="/login" />} 
+          />
+          <Route 
             path="/dashboard" 
-            element={user ? <DashboardPage /> : <Navigate to="/login" />} 
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            } 
           />
           <Route 
             path="/my-rooms" 
-            element={user ? <MyRoomsPage /> : <Navigate to="/login" />} 
+            element={
+              <ProtectedRoute>
+                <MyRoomsPage />
+              </ProtectedRoute>
+            } 
           />
           <Route 
             path="/profile" 
-            element={user ? <ProfilePage /> : <Navigate to="/login" />} 
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } 
           />
           <Route 
             path="/premium" 
-            element={user ? <PremiumPage /> : <Navigate to="/login" />} 
+            element={
+              <ProtectedRoute>
+                <PremiumPage />
+              </ProtectedRoute>
+            } 
           />
         </Routes>
       </div>

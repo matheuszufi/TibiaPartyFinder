@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { signInWithGoogle } from '../lib/auth';
 import { Button } from '../components/ui/button';
@@ -14,16 +14,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setNeedsVerification(false);
 
     try {
       console.log('Tentando fazer login com:', email);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Verificar se o email foi verificado
+      if (!userCredential.user.emailVerified) {
+        setNeedsVerification(true);
+        setError('Sua conta não foi verificada. Verifique seu email ou clique no botão abaixo para reenviar.');
+        setLoading(false);
+        return;
+      }
+      
       console.log('Login realizado com sucesso:', userCredential.user.uid);
       navigate('/dashboard');
     } catch (error: any) {
@@ -40,6 +51,21 @@ export default function LoginPage() {
     }
 
     setLoading(false);
+  };
+
+  const resendVerificationEmail = async () => {
+    if (!email) {
+      setError('Digite seu email primeiro');
+      return;
+    }
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      setError('Email de verificação reenviado! Verifique sua caixa de entrada.');
+    } catch (error) {
+      setError('Erro ao reenviar email de verificação');
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -111,6 +137,15 @@ export default function LoginPage() {
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <p className="text-red-700 text-sm text-center">{error}</p>
+                  {needsVerification && (
+                    <Button
+                      type="button"
+                      onClick={resendVerificationEmail}
+                      className="mt-2 w-full bg-orange-600 hover:bg-orange-700 text-white text-sm"
+                    >
+                      Reenviar Email de Verificação
+                    </Button>
+                  )}
                 </div>
               )}
 

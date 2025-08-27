@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { searchCharacter } from '../lib/tibia-api';
@@ -17,12 +17,14 @@ export default function RegisterPage() {
   const [characterName, setCharacterName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
       // Validar personagem
@@ -36,6 +38,9 @@ export default function RegisterPage() {
       // Criar conta
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
+      // Enviar email de verificação
+      await sendEmailVerification(userCredential.user);
+      
       // Salvar dados do usuário
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email,
@@ -43,10 +48,17 @@ export default function RegisterPage() {
         level: character.level,
         vocation: character.vocation,
         world: character.world,
+        emailVerified: false,
         createdAt: new Date()
       });
 
-      navigate('/dashboard');
+      setSuccess('Conta criada com sucesso! Verifique seu email para ativar a conta.');
+      
+      // Não redirecionar automaticamente - aguardar verificação
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+      
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setError('Este email já está sendo usado');
@@ -143,9 +155,15 @@ export default function RegisterPage() {
                 </div>
               )}
 
+              {success && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-green-700 text-sm text-center">{success}</p>
+                </div>
+              )}
+
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !!success}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {loading ? 'Criando conta...' : 'Cadastrar'}

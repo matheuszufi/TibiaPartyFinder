@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Sword, Users, Shield, Github, User } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { AutoAd } from '../components/SimpleAd';
 import exivaLogo from '../assets/images/exiva.png';
 
 export default function HomePage() {
@@ -85,6 +86,11 @@ export default function HomePage() {
           </Card>
         </div>
 
+        {/* Anúncio após as funcionalidades */}
+        <div className="mt-12 text-center">
+          <AutoAd className="max-w-4xl mx-auto" />
+        </div>
+
         {/* CTA Section */}
         <div className="text-center mt-16">
           <Card className="max-w-2xl mx-auto bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
@@ -110,6 +116,14 @@ export default function HomePage() {
           </Card>
         </div>
       </main>
+
+      {/* Anúncio antes do footer */}
+      <div className="mt-16 text-center bg-gray-100 py-8">
+        <div className="container mx-auto px-4">
+          <p className="text-xs text-gray-500 mb-4">PUBLICIDADE</p>
+          <AutoAd className="max-w-4xl mx-auto" />
+        </div>
+      </div>
 
       {/* Footer */}
       <footer className="bg-gray-50 border-t border-gray-200 mt-16">

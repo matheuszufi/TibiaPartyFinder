@@ -5,6 +5,7 @@ import { collection, query, onSnapshot, doc, getDoc, orderBy, updateDoc, limit }
 import { auth, db } from '../lib/firebase';
 import { fetchBosses, fetchCreatures, getWorlds, type Boss, type Creature, type World } from '../lib/tibia-api';
 import { formatTimeRemaining } from '../utils/roomExpiration';
+import { DisplayAd } from '../components/SimpleAd';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -494,6 +495,14 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
+
+      {/* Anúncio abaixo do header */}
+      <div className="bg-white border-b border-gray-200 py-4">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-xs text-gray-500 mb-2">PUBLICIDADE</p>
+          <DisplayAd width={300} height={250} className="mx-auto" />
+        </div>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         {/* Header com Filtros */}
