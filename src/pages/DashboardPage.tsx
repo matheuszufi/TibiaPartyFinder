@@ -6,7 +6,7 @@ import { auth, db } from '../lib/firebase';
 import { fetchBosses, fetchCreatures, getWorlds, type Boss, type Creature, type World } from '../lib/tibia-api';
 import { formatTimeRemaining } from '../utils/roomExpiration';
 import { useRoomCompletionMonitor } from '../hooks/useRoomCompletionMonitor';
-import { SafeAdSense } from '../components/SafeAdSense';
+import { SimpleAdSense } from '../components/SimpleAdSense';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -506,8 +506,8 @@ export default function DashboardPage() {
           <div className="flex justify-center">
             <div className="text-center">
               <p className="text-xs text-gray-500 mb-3">PUBLICIDADE</p>
-              <div className="flex justify-center items-center min-w-[300px] min-h-[250px]">
-                <SafeAdSense width={300} height={250} format="rectangle" />
+              <div className="flex justify-center items-center w-[320px] h-[270px] bg-gray-50 rounded-lg p-2">
+                <SimpleAdSense width={300} height={250} />
               </div>
             </div>
           </div>

@@ -17,25 +17,39 @@ export const SafeAdSense = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const adRef = useRef<HTMLModElement>(null);
   const [hasValidDimensions, setHasValidDimensions] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const checkDimensions = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const parentRect = containerRef.current.parentElement?.getBoundingClientRect();
+      
+      // Verificar se o elemento está visível e tem espaço
+      const isVisible = rect.width > 0 && rect.height > 0;
+      const hasParentSpace = parentRect ? parentRect.width >= width : true;
+      const isValid = isVisible && rect.width >= width && rect.height >= height;
+      
+      if (!isValid) {
+        console.warn(`Container AdSense inválido:`, {
+          containerSize: `${rect.width}x${rect.height}`,
+          required: `${width}x${height}`,
+          parentSize: parentRect ? `${parentRect.width}x${parentRect.height}` : 'N/A',
+          isVisible,
+          hasParentSpace
+        });
+      }
+      
+      setHasValidDimensions(isValid);
+      return isValid;
+    }
+    return false;
+  };
 
   useEffect(() => {
-    const checkDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const isValid = rect.width >= width && rect.height >= height;
-        setHasValidDimensions(isValid);
-        
-        if (!isValid) {
-          console.warn(`Container AdSense muito pequeno: ${rect.width}x${rect.height}, necessário: ${width}x${height}`);
-        }
-        
-        return isValid;
-      }
-      return false;
-    };
-
-    // Verificar dimensões imediatamente
-    checkDimensions();
+    // Aguardar um tempo antes de verificar dimensões
+    const initialTimer = setTimeout(() => {
+      checkDimensions();
+    }, 1000);
 
     // Observer para mudanças de tamanho
     const resizeObserver = new ResizeObserver(() => {
@@ -47,34 +61,38 @@ export const SafeAdSense = ({
     }
 
     return () => {
+      clearTimeout(initialTimer);
       resizeObserver.disconnect();
     };
   }, [width, height]);
 
   useEffect(() => {
-    if (!hasValidDimensions) return;
+    if (!hasValidDimensions || retryCount >= 3) return;
 
     const timer = setTimeout(() => {
       try {
         if (adRef.current && containerRef.current) {
           // Verificar novamente as dimensões antes de carregar
           const rect = containerRef.current.getBoundingClientRect();
-          if (rect.width >= width && rect.height >= height) {
+          if (rect.width >= width && rect.height >= height && rect.width > 0) {
+            console.log('Carregando AdSense com dimensões:', `${rect.width}x${rect.height}`);
             // @ts-ignore
             (window.adsbygoogle = window.adsbygoogle || []).push({});
             setAdState('loaded');
           } else {
-            setAdState('error');
+            console.warn('Dimensões ainda inválidas, tentando novamente em 2s');
+            setRetryCount(prev => prev + 1);
+            setTimeout(() => setHasValidDimensions(checkDimensions()), 2000);
           }
         }
       } catch (err) {
         console.error('Erro ao carregar anúncio AdSense:', err);
         setAdState('error');
       }
-    }, 3000); // Delay maior para garantir renderização completa
+    }, 2000 + (retryCount * 1000)); // Delay progressivo
 
     return () => clearTimeout(timer);
-  }, [hasValidDimensions, width, height]);
+  }, [hasValidDimensions, width, height, retryCount]);
 
   const getDataAdFormat = () => {
     switch (format) {
