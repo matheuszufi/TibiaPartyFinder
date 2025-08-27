@@ -28,7 +28,7 @@ export const useRoomLimits = (userId: string | undefined) => {
           setUserProfile(profile);
           updateRoomLimits(profile);
         } else {
-          // Criar perfil padrão para usuários novos
+              // Contas gratuitas: 1 sala por dia, Premium: ilimitadas
           const defaultProfile: UserProfile = {
             uid: userId,
             email: '',
@@ -58,11 +58,12 @@ export const useRoomLimits = (userId: string | undefined) => {
     // Reset contador se é um novo dia
     const roomsToday = lastCreatedDate === today ? (profile.roomsCreatedToday || 0) : 0;
     
-    // Apenas contas premium podem criar salas
-    const canCreate = profile.accountType === 'premium';
+    // Contas gratuitas: 1 sala por dia, Premium: ilimitadas
+    const maxRooms = profile.accountType === 'premium' ? Infinity : 1;
+    const canCreate = profile.accountType === 'premium' ? true : roomsToday < 1;
 
     setRoomLimits({
-      maxRoomsPerDay: profile.accountType === 'premium' ? Infinity : 0,
+      maxRoomsPerDay: maxRooms,
       canCreateRoom: canCreate,
       roomsCreatedToday: roomsToday
     });
@@ -71,16 +72,16 @@ export const useRoomLimits = (userId: string | undefined) => {
   const incrementRoomCount = async () => {
     if (!userId || !userProfile) return false;
 
-    // Apenas contas premium podem criar salas
-    if (userProfile.accountType !== 'premium') {
-      return false;
-    }
-
     const today = new Date().toDateString();
     const lastCreatedDate = userProfile.lastRoomCreatedDate || '';
     
     // Reset contador se é um novo dia
     const currentCount = lastCreatedDate === today ? (userProfile.roomsCreatedToday || 0) : 0;
+
+    // Verificar limites: Premium ilimitado, Free máximo 1 por dia
+    if (userProfile.accountType === 'free' && currentCount >= 1) {
+      return false;
+    }
 
     try {
       const userRef = doc(db, 'userProfiles', userId);
@@ -133,7 +134,12 @@ export const useRoomLimits = (userId: string | undefined) => {
 
   const getRemainingRooms = () => {
     if (userProfile?.accountType === 'premium') return Infinity;
-    return 0; // Contas gratuitas não podem criar salas
+    
+    const today = new Date().toDateString();
+    const lastCreatedDate = userProfile?.lastRoomCreatedDate || '';
+    const roomsToday = lastCreatedDate === today ? (userProfile?.roomsCreatedToday || 0) : 0;
+    
+    return Math.max(0, 1 - roomsToday); // Máximo 1 sala por dia para contas gratuitas
   };
 
   const getResetTime = () => {

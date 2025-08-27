@@ -4,13 +4,12 @@ import { collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { searchCharacter, fetchBosses, fetchCreatures, TIBIA_QUESTS, type Boss, type Creature } from '../lib/tibia-api';
 import { useRoomLimits } from '../hooks/useRoomLimits';
-import { calculateRoomExpiration } from '../utils/roomExpiration';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Card, CardContent } from './ui/card';
-import { User, Search, Loader2, X, Plus, Crown, AlertCircle, Calendar, Clock } from 'lucide-react';
+import { User, Search, Loader2, X, Plus, Crown, AlertCircle } from 'lucide-react';
 
 const ACTIVITY_TYPES = ['boss', 'hunt', 'quest'];
 
@@ -21,18 +20,13 @@ interface CreateRoomModalProps {
 
 export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [user] = useAuthState(auth);
-  const { userProfile, incrementRoomCount, upgradeToPremium } = useRoomLimits(user?.uid);
+    const { userProfile, roomLimits, incrementRoomCount, upgradeToPremium, getRemainingRooms } = useRoomLimits(user?.uid);
   const [title, setTitle] = useState('');
   const [activityType, setActivityType] = useState('');
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [minLevel, setMinLevel] = useState('');
-  const [maxMembers, setMaxMembers] = useState('5');
+  const [maxMembers, setMaxMembers] = useState('4');
   const [loading, setLoading] = useState(false);
-  
-  // Estados para agendamento
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
   
   // Estados para busca de personagem
   const [leaderName, setLeaderName] = useState('');
@@ -139,22 +133,14 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
       return;
     }
 
-    // Verificar se é conta premium (agora obrigatório para criar salas)
-    if (userProfile?.accountType !== 'premium') {
-      alert('Apenas contas Premium podem criar salas! Faça o upgrade para continuar.');
-      return;
-    }
-
-    // Validar agendamento se especificado
-    let scheduledDateTime: Date | undefined;
-    if (isScheduled && scheduledDate && scheduledTime) {
-      scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      
-      // Verificar se a data/hora é no futuro
-      if (scheduledDateTime <= new Date()) {
-        alert('A data e hora agendada deve ser no futuro!');
-        return;
+    // Verificar limites da conta
+    if (!roomLimits.canCreateRoom) {
+      if (userProfile?.accountType === 'free') {
+        alert('Você já criou sua sala gratuita hoje! Contas gratuitas podem criar apenas 1 sala por dia. Upgrade para Premium para salas ilimitadas.');
+      } else {
+        alert('Limite de salas atingido! Tente novamente amanhã.');
       }
+      return;
     }
 
     setLoading(true);
@@ -168,9 +154,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
         return;
       }
 
-      // Calcular validade da sala
-      const expiresAt = calculateRoomExpiration(scheduledDateTime);
-
       await addDoc(collection(db, 'rooms'), {
         title,
         activityType,
@@ -181,9 +164,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
         world: leaderData.world,
         createdBy: user.uid,
         createdAt: new Date(),
-        expiresAt, // Nova propriedade para validade
-        scheduledFor: scheduledDateTime || null, // Data agendada se especificada
-        isScheduled: !!scheduledDateTime, // Flag para salas agendadas
         members: [user.uid],
         isActive: true,
         // Dados do líder
@@ -200,10 +180,7 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
       setActivityType('');
       setSelectedTargets([]);
       setMinLevel('');
-      setMaxMembers('5');
-      setIsScheduled(false);
-      setScheduledDate('');
-      setScheduledTime('');
+      setMaxMembers('4');
       setLeaderName('');
       setLeaderData(null);
       setLeaderError('');
@@ -232,34 +209,63 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
 
         {/* Status da Conta */}
         {userProfile && (
-          <Card className={`border-2 ${userProfile.accountType === 'premium' ? 'border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50' : 'border-red-300 bg-gradient-to-r from-red-50 to-orange-50'}`}>
+          <Card className={`border-2 ${userProfile.accountType === 'premium' ? 'border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50' : 'border-gray-300 bg-gray-50'}`}>
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {userProfile.accountType === 'premium' ? (
                     <Crown className="h-4 w-4 text-yellow-600" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 text-red-500" />
+                    <AlertCircle className="h-4 w-4 text-gray-500" />
                   )}
-                  <span className={`text-sm font-semibold ${userProfile.accountType === 'premium' ? 'text-yellow-700' : 'text-red-700'}`}>
+                  <span className={`text-sm font-semibold ${userProfile.accountType === 'premium' ? 'text-yellow-700' : 'text-gray-700'}`}>
                     Conta {userProfile.accountType === 'premium' ? 'Premium' : 'Gratuita'}
                   </span>
                 </div>
                 <div className="text-xs text-gray-600">
                   {userProfile.accountType === 'premium' ? (
                     <span className="text-green-600 font-medium">Salas ilimitadas</span>
+                  ) : roomLimits.canCreateRoom ? (
+                    <span className="text-blue-600 font-medium">
+                      {getRemainingRooms()}/1 salas hoje (gratuita)
+                    </span>
                   ) : (
-                    <span className="text-red-600 font-medium">Não pode criar salas</span>
+                    <span className="text-red-600 font-medium">Limite diário atingido</span>
                   )}
                 </div>
               </div>
               
-              {userProfile.accountType === 'free' && (
+              {userProfile.accountType === 'free' && !roomLimits.canCreateRoom && (
                 <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded text-xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 text-red-700">
                       <AlertCircle className="h-3 w-3" />
-                      <span>Apenas contas Premium podem criar salas!</span>
+                      <span>Limite diário atingido! Contas gratuitas podem criar apenas 1 sala por dia.</span>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={async () => {
+                        const success = await upgradeToPremium();
+                        if (success) {
+                          alert('Parabéns! Sua conta foi upgradada para Premium! 🎉');
+                        }
+                      }}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs px-2 py-1 h-6"
+                    >
+                      <Crown className="h-3 w-3 mr-1" />
+                      Upgrade
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {userProfile.accountType === 'free' && roomLimits.canCreateRoom && (
+                <div className="mt-2 p-2 bg-blue-100 border border-blue-200 rounded text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-blue-700">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>Contas gratuitas podem criar 1 sala por dia. Upgrade para salas ilimitadas!</span>
                     </div>
                     <Button
                       type="button"
@@ -451,94 +457,21 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Máximo de Membros
-                {userProfile?.accountType === 'premium' && (
-                  <span className="text-xs text-yellow-600 ml-1">(Premium: até 40)</span>
-                )}
               </label>
               <Select value={maxMembers} onValueChange={setMaxMembers}>
                 <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  {userProfile?.accountType === 'premium' ? 
-                    // Opções para contas Premium
-                    [2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40].map((num) => (
-                      <SelectItem key={num} value={num.toString()} className="text-gray-900 hover:bg-gray-100">
-                        {num} membros
-                        {num > 5 && <span className="text-yellow-600 text-xs ml-1">(Premium)</span>}
-                      </SelectItem>
-                    ))
-                    :
-                    // Opções para contas gratuitas (limitadas)
-                    [2, 3, 4, 5].map((num) => (
-                      <SelectItem key={num} value={num.toString()} className="text-gray-900 hover:bg-gray-100">
-                        {num} membros
-                      </SelectItem>
-                    ))
-                  }
+                  {[2, 3, 4, 5].map((num) => (
+                    <SelectItem key={num} value={num.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {num} membros
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-
-          {/* Agendamento (apenas para Premium) */}
-          {userProfile?.accountType === 'premium' && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <input
-                  type="checkbox"
-                  id="isScheduled"
-                  checked={isScheduled}
-                  onChange={(e) => setIsScheduled(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="isScheduled" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-blue-600" />
-                  Agendar sala para data/hora específica
-                </label>
-              </div>
-              
-              {isScheduled && (
-                <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">
-                      Data
-                    </label>
-                    <Input
-                      type="date"
-                      value={scheduledDate}
-                      onChange={(e) => setScheduledDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      required={isScheduled}
-                      className="border-blue-300 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">
-                      Horário
-                    </label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500" />
-                      <Input
-                        type="time"
-                        value={scheduledTime}
-                        onChange={(e) => setScheduledTime(e.target.value)}
-                        required={isScheduled}
-                        className="border-blue-300 focus:border-blue-500 focus:ring-blue-500 pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
-                      <AlertCircle className="inline h-3 w-3 mr-1" />
-                      Salas agendadas ficam válidas até a data/hora especificada. 
-                      Salas imediatas têm validade de 1 hora.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           <DialogFooter className="pt-6">
             <Button
@@ -551,9 +484,9 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
             </Button>
             <Button
               type="submit"
-              disabled={loading || userProfile?.accountType !== 'premium'}
+              disabled={loading || !roomLimits.canCreateRoom}
               className={`font-semibold ${
-                userProfile?.accountType !== 'premium'
+                !roomLimits.canCreateRoom 
                   ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
@@ -564,7 +497,7 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                   Criando...
                 </>
               ) : 
-               userProfile?.accountType !== 'premium' ? 'Apenas Premium' : 
+               !roomLimits.canCreateRoom ? 'Limite Atingido' : 
                'Criar Party'}
             </Button>
           </DialogFooter>

@@ -206,7 +206,6 @@ export default function MyRoomsPage() {
         }
       });
       setMyRooms(allRooms);
-      setLoading(false); // Marcar como carregado após primeira query
     });
 
     const unsubscribeMember = onSnapshot(memberRoomsQuery, (memberSnapshot) => {
@@ -224,13 +223,27 @@ export default function MyRoomsPage() {
         }
       });
       setMyRooms(allRooms);
-      setLoading(false); // Marcar como carregado após primeira query
     });
 
     return () => {
       unsubscribeCreated();
       unsubscribeMember();
     };
+  }, [user]);
+        memberRooms.forEach(memberRoom => {
+          if (!allRooms.find(room => room.id === memberRoom.id)) {
+            allRooms.push(memberRoom);
+          }
+        });
+
+        setMyRooms(allRooms);
+        setLoading(false);
+      });
+
+      return () => unsubscribeMember();
+    });
+
+    return () => unsubscribeCreated();
   }, [user]);
 
   const handleApproveRequest = async (roomId: string, request: JoinRequest) => {

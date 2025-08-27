@@ -365,7 +365,7 @@ export const ProfilePage = () => {
                 <p className="text-xs text-gray-600 mt-1">
                   {userData.isPremium 
                     ? "Você pode criar salas ilimitadas e agendar parties"
-                    : "Você pode criar até 2 salas e não pode agendar parties"
+                    : "Você pode criar 1 sala por dia"
                   }
                 </p>
                 {!userData.isPremium && (

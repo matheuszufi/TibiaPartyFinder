@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut } from 'firebase/auth';
-import { collection, query, onSnapshot, doc, getDoc, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, getDoc, orderBy, updateDoc, limit } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { fetchBosses, fetchCreatures, type Boss, type Creature } from '../lib/tibia-api';
+import { fetchBosses, fetchCreatures, getWorlds, type Boss, type Creature, type World } from '../lib/tibia-api';
 import { formatTimeRemaining } from '../utils/roomExpiration';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -71,11 +71,11 @@ export default function DashboardPage() {
   // Estados para dados da API
   const [bosses, setBosses] = useState<Boss[]>([]);
   const [creatures, setCreatures] = useState<Creature[]>([]);
+  const [worlds, setWorlds] = useState<World[]>([]);
   
   // Estados dos filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [filterLevel, setFilterLevel] = useState('all-levels');
   const [filterWorld, setFilterWorld] = useState('all');
 
   // Estados para modal de solicitação
@@ -83,18 +83,14 @@ export default function DashboardPage() {
   const [selectedRoom, setSelectedRoom] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
-    console.log('DashboardPage useEffect - user:', user);
     if (user) {
       // Buscar dados do usuário
       const fetchUserData = async () => {
         try {
-          console.log('Buscando dados do usuário:', user.uid);
           const userDoc = await getDoc(doc(db, 'userProfiles', user.uid));
           if (userDoc.exists()) {
-            console.log('Dados do usuário encontrados:', userDoc.data());
             setUserData(userDoc.data());
           } else {
-            console.log('Usuário não encontrado no Firestore, criando dados padrão');
             // Se não existir dados no Firestore, criar dados padrão
             const defaultUserData = {
               email: user.email,
@@ -107,7 +103,6 @@ export default function DashboardPage() {
             setUserData(defaultUserData);
           }
         } catch (error) {
-          console.error('Erro ao buscar dados do usuário:', error);
           // Definir dados padrão em caso de erro
           const defaultUserData = {
             email: user.email,
@@ -125,25 +120,18 @@ export default function DashboardPage() {
       // Escutar mudanças nas salas do mundo do usuário
       const q = query(
         collection(db, 'rooms'),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(50) // Limitar para 50 salas mais recentes
       );
       
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const roomsData = snapshot.docs.map(doc => {
           const data = doc.data();
-          console.log(`=== ROOM ${doc.id} FIREBASE DATA ===`);
-          console.log('Full raw data:', data);
-          console.log('memberCharacters field:', data.memberCharacters);
-          console.log('memberCharacters type:', typeof data.memberCharacters);
-          console.log('All field keys:', Object.keys(data));
-          console.log('members field:', data.members);
-          console.log('================================');
           return {
             id: doc.id,
             ...data
           };
         }) as PartyRoom[];
-        console.log('Final rooms array:', roomsData);
         setRooms(roomsData);
       });
 
@@ -155,12 +143,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadTibiaData = async () => {
       try {
-        const [bossesData, creaturesData] = await Promise.all([
+        const [bossesData, creaturesData, worldsData] = await Promise.all([
           fetchBosses(),
-          fetchCreatures()
+          fetchCreatures(),
+          getWorlds()
         ]);
         setBosses(bossesData);
         setCreatures(creaturesData);
+        setWorlds(worldsData);
       } catch (error) {
         console.error('Erro ao carregar dados da API do Tibia:', error);
       }
@@ -204,7 +194,10 @@ export default function DashboardPage() {
     if (searchTerm) {
       filtered = filtered.filter(room =>
         room.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.description.toLowerCase().includes(searchTerm.toLowerCase())
+        room.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (room.selectedTargets && room.selectedTargets.some(target => 
+          target.toLowerCase().includes(searchTerm.toLowerCase())
+        ))
       );
     }
 
@@ -216,24 +209,19 @@ export default function DashboardPage() {
       });
     }
 
-    // Filtro por level
-    if (filterLevel === 'my-level' && userData) {
-      const userLevel = userData.level || 1;
-      filtered = filtered.filter(room => 
-        userLevel >= room.minLevel && userLevel <= room.maxLevel
-      );
-    }
-
     // Filtro por world
     if (filterWorld !== 'all' && userData) {
       const userWorld = userData.world || '';
       if (filterWorld === 'my-world') {
         filtered = filtered.filter(room => room.world === userWorld);
+      } else {
+        // Filtro por world específico da API
+        filtered = filtered.filter(room => room.world === filterWorld);
       }
     }
 
     setFilteredRooms(filtered);
-  }, [rooms, searchTerm, filterType, filterLevel, filterWorld, userData]);
+  }, [rooms, searchTerm, filterType, filterWorld, userData]);
 
   const handleLogout = async () => {
     try {
@@ -465,11 +453,7 @@ export default function DashboardPage() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className="p-1 rounded-lg flex items-center justify-center">
-              <img src={exivaLogo} alt="Exiva" className="h-20 w-20" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Exiva</h1>
-              <p className="text-sm text-gray-600 -mt-1">Party Finder</p>
+              <img src={exivaLogo} alt="Logo" className="h-20 w-20" />
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -544,7 +528,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Busca por texto */}
                 <div>
                   <div className="relative">
@@ -562,29 +546,13 @@ export default function DashboardPage() {
                 <div>
                   <Select value={filterType} onValueChange={setFilterType}>
                     <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
-                      <SelectValue placeholder="Tipo de Hunt" />
+                      <SelectValue placeholder="Tipo de Atividade" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200">
                       <SelectItem value="all" className="text-gray-900">Todos os Tipos</SelectItem>
-                      <SelectItem value="EXP Hunt" className="text-gray-900">EXP Hunt</SelectItem>
-                      <SelectItem value="Profit Hunt" className="text-gray-900">Profit Hunt</SelectItem>
-                      <SelectItem value="Boss Hunt" className="text-gray-900">Boss Hunt</SelectItem>
-                      <SelectItem value="Quest" className="text-gray-900">Quest</SelectItem>
-                      <SelectItem value="Task" className="text-gray-900">Task</SelectItem>
-                      <SelectItem value="Bestiary" className="text-gray-900">Bestiary</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Filtro por level */}
-                <div>
-                  <Select value={filterLevel} onValueChange={setFilterLevel}>
-                    <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
-                      <SelectValue placeholder="Filtro Level" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200">
-                      <SelectItem value="all-levels" className="text-gray-900">Todos os Levels</SelectItem>
-                      <SelectItem value="my-level" className="text-gray-900">Meu Level</SelectItem>
+                      <SelectItem value="hunt" className="text-gray-900">Hunt</SelectItem>
+                      <SelectItem value="boss" className="text-gray-900">Boss</SelectItem>
+                      <SelectItem value="quest" className="text-gray-900">Quest</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -595,9 +563,20 @@ export default function DashboardPage() {
                     <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
                       <SelectValue placeholder="World" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200">
+                    <SelectContent className="bg-white border border-gray-200 max-h-60 overflow-y-auto">
                       <SelectItem value="all" className="text-gray-900">Todos os Worlds</SelectItem>
-                      <SelectItem value="my-world" className="text-gray-900">Meu World</SelectItem>
+                      <SelectItem value="my-world" className="text-gray-900">Meu World ({userData?.world || 'N/A'})</SelectItem>
+                      {worlds.length > 0 && (
+                        <>
+                          {worlds
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((world) => (
+                            <SelectItem key={world.name} value={world.name} className="text-gray-900">
+                              {world.name} ({world.location}) - {world.players_online} online
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -685,10 +664,6 @@ export default function DashboardPage() {
                   )}
                   
                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center text-blue-600 font-medium">
-                      <span>{room.activityType || room.huntType}</span>
-                    </div>
-                    
                     {/* Seção de Vagas da Party */}
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
                       <div className="flex items-center mb-3">
