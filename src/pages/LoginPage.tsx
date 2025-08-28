@@ -7,9 +7,11 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ArrowLeft } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import exiva2 from '../assets/images/exiva2.png';
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ export default function LoginPage() {
       // Verificar se o email foi verificado
       if (!userCredential.user.emailVerified) {
         setNeedsVerification(true);
-        setError('Sua conta não foi verificada. Verifique seu email ou clique no botão abaixo para reenviar.');
+        setError(t('login.verificationError'));
         setLoading(false);
         return;
       }
@@ -40,13 +42,13 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error('Erro no login:', error);
       if (error.code === 'auth/user-not-found') {
-        setError('Usuário não encontrado');
+        setError(t('login.userNotFound'));
       } else if (error.code === 'auth/wrong-password') {
-        setError('Senha incorreta');
+        setError(t('login.wrongPassword'));
       } else if (error.code === 'auth/invalid-email') {
-        setError('Email inválido');
+        setError(t('login.invalidEmail'));
       } else {
-        setError('Email ou senha incorretos');
+        setError(t('login.genericError'));
       }
     }
 
@@ -55,16 +57,16 @@ export default function LoginPage() {
 
   const resendVerificationEmail = async () => {
     if (!email) {
-      setError('Digite seu email primeiro');
+      setError(t('login.emailPlaceholder'));
       return;
     }
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(userCredential.user);
-      setError('Email de verificação reenviado! Verifique sua caixa de entrada.');
+      setError(t('login.verificationSent'));
     } catch (error) {
-      setError('Erro ao reenviar email de verificação');
+      setError(t('login.resendVerification'));
     }
   };
 
@@ -80,7 +82,7 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error('Erro no login com Google:', error);
-      setError('Erro ao fazer login com Google. Tente novamente.');
+      setError(t('login.googleError'));
     }
 
     setLoading(false);
@@ -97,7 +99,7 @@ export default function LoginPage() {
         >
           <Link to="/">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('login.backButton')}
           </Link>
         </Button>
 
@@ -106,9 +108,9 @@ export default function LoginPage() {
             <div className="flex items-center justify-center mx-auto">
               <img src={exiva2} alt="Exiva" className="h-20 w-20" />
             </div>
-            <CardTitle className="text-2xl text-gray-900">Entrar</CardTitle>
+            <CardTitle className="text-2xl text-gray-900">{t('login.title')}</CardTitle>
             <CardDescription className="text-gray-600">
-              Acesse sua conta para encontrar parties
+              {t('login.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -116,7 +118,7 @@ export default function LoginPage() {
               <div>
                 <Input
                   type="email"
-                  placeholder="Email"
+                  placeholder={t('login.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -126,7 +128,7 @@ export default function LoginPage() {
               <div>
                 <Input
                   type="password"
-                  placeholder="Senha"
+                  placeholder={t('login.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -143,7 +145,7 @@ export default function LoginPage() {
                       onClick={resendVerificationEmail}
                       className="mt-2 w-full bg-orange-600 hover:bg-orange-700 text-white text-sm"
                     >
-                      Reenviar Email de Verificação
+                      {t('login.resendVerification')}
                     </Button>
                   )}
                 </div>
@@ -154,7 +156,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {loading ? 'Entrando...' : 'Entrar'}
+                {loading ? t('login.loggingIn') : t('login.loginButton')}
               </Button>
             </form>
 
@@ -163,7 +165,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">ou</span>
+                <span className="bg-white px-2 text-gray-500">{t('login.orDivider')}</span>
               </div>
             </div>
 
@@ -179,14 +181,14 @@ export default function LoginPage() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              Continuar com Google
+              {t('login.googleButton')}
             </Button>
 
             <div className="text-center">
               <p className="text-gray-600">
-                Não tem uma conta?{' '}
+                {t('login.noAccount')}{' '}
                 <Link to="/register" className="text-blue-600 hover:text-blue-700 hover:underline">
-                  Cadastre-se aqui
+                  {t('login.signUpLink')}
                 </Link>
               </p>
             </div>

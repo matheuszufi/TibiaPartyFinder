@@ -416,7 +416,7 @@ export default function HomePage() {
             />
           </div>
           <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
-            <Link to="/register">Começar Agora</Link>
+            <Link to="/register">{t('home.startNow')}</Link>
           </Button>
         </div>
 
@@ -424,10 +424,10 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto mb-16">
           <div className="text-center mb-8">
             <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              Parties Disponíveis
+              {t('home.availableParties')}
             </h3>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Veja algumas das parties ativas no momento. Cadastre-se para solicitar entrada e participar!
+              {t('home.subtitle')}
             </p>
           </div>
 
@@ -436,7 +436,7 @@ export default function HomePage() {
             <CardHeader>
               <CardTitle className="flex items-center text-gray-900">
                 <Filter className="h-5 w-5 mr-2" />
-                Buscar Parties
+                {t('home.searchTitle')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -446,7 +446,7 @@ export default function HomePage() {
                   <div className="relative">
                     <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
                     <Input
-                      placeholder="Buscar parties..."
+                      placeholder={t('home.searchPlaceholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
@@ -458,13 +458,13 @@ export default function HomePage() {
                 <div>
                   <Select value={filterType} onValueChange={setFilterType}>
                     <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
-                      <SelectValue placeholder="Tipo de Atividade" />
+                      <SelectValue placeholder={t('dashboard.activityType')} />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200">
-                      <SelectItem value="all" className="text-gray-900">Todos os Tipos</SelectItem>
-                      <SelectItem value="hunt" className="text-gray-900">Hunt</SelectItem>
-                      <SelectItem value="boss" className="text-gray-900">Boss</SelectItem>
-                      <SelectItem value="quest" className="text-gray-900">Quest</SelectItem>
+                      <SelectItem value="all" className="text-gray-900">{t('dashboard.allTypes')}</SelectItem>
+                      <SelectItem value="hunt" className="text-gray-900">{t('dashboard.hunt')}</SelectItem>
+                      <SelectItem value="boss" className="text-gray-900">{t('dashboard.boss')}</SelectItem>
+                      <SelectItem value="quest" className="text-gray-900">{t('dashboard.quest')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -473,10 +473,10 @@ export default function HomePage() {
                 <div>
                   <Select value={filterWorld} onValueChange={setFilterWorld}>
                     <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
-                      <SelectValue placeholder="World" />
+                      <SelectValue placeholder={t('dashboard.world')} />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200 max-h-60 overflow-y-auto">
-                      <SelectItem value="all" className="text-gray-900">Todos os Worlds</SelectItem>
+                      <SelectItem value="all" className="text-gray-900">{t('dashboard.allWorlds')}</SelectItem>
                       {worlds.length > 0 && worlds
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map((world) => (
@@ -498,10 +498,10 @@ export default function HomePage() {
                 <CardContent className="text-center py-12">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">
-                    {rooms.length === 0 ? 'Nenhuma party encontrada.' : 'Nenhuma party corresponde aos filtros.'}
+                    {rooms.length === 0 ? t('home.noParties') : t('home.noPartiesFilter')}
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
-                    {rooms.length === 0 ? 'Aguarde novos jogadores criarem parties!' : 'Tente ajustar os filtros de busca.'}
+                    {rooms.length === 0 ? t('home.waitingMessage') : t('home.filterMessage')}
                   </p>
                 </CardContent>
               </Card>
@@ -740,7 +740,7 @@ export default function HomePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Button asChild size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                <Link to="/register">Criar Conta Grátis</Link>
+                <Link to="/register">{t('home.cta')}</Link>
               </Button>
               <p className="text-sm text-gray-500">
                 Já tem uma conta?{' '}
