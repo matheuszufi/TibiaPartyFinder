@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { UserProfile, RoomLimits } from '../types/user';
 
@@ -7,8 +7,10 @@ export const useRoomLimits = (userId: string | undefined) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [roomLimits, setRoomLimits] = useState<RoomLimits>({
     maxRoomsPerDay: 1,
+    maxSimultaneousRooms: 1,
     canCreateRoom: false,
-    roomsCreatedToday: 0
+    roomsCreatedToday: 0,
+    activeRooms: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -26,20 +28,20 @@ export const useRoomLimits = (userId: string | undefined) => {
         if (userDoc.exists()) {
           const profile = userDoc.data() as UserProfile;
           setUserProfile(profile);
-          updateRoomLimits(profile);
+          await updateRoomLimits(profile);
         } else {
-              // Contas gratuitas: 1 sala por dia, Premium: ilimitadas
           const defaultProfile: UserProfile = {
             uid: userId,
             email: '',
             accountType: 'free',
             roomsCreatedToday: 0,
-            lastRoomCreatedDate: ''
+            lastRoomCreatedDate: '',
+            isPremium: false
           };
           
           await setDoc(userRef, defaultProfile);
           setUserProfile(defaultProfile);
-          updateRoomLimits(defaultProfile);
+          await updateRoomLimits(defaultProfile);
         }
       } catch (error) {
         console.error('Erro ao buscar perfil do usuário:', error);
@@ -51,22 +53,46 @@ export const useRoomLimits = (userId: string | undefined) => {
     fetchUserProfile();
   }, [userId]);
 
-  const updateRoomLimits = (profile: UserProfile) => {
+  const updateRoomLimits = async (profile: UserProfile) => {
     const today = new Date().toDateString();
     const lastCreatedDate = profile.lastRoomCreatedDate || '';
     
     // Reset contador se é um novo dia
     const roomsToday = lastCreatedDate === today ? (profile.roomsCreatedToday || 0) : 0;
     
-    // Contas gratuitas: 1 sala por dia, Premium: ilimitadas
-    const maxRooms = profile.accountType === 'premium' ? Infinity : 1;
-    const canCreate = profile.accountType === 'premium' ? true : roomsToday < 1;
+    // Contar salas ativas do usuário
+    const activeRoomsCount = await getActiveRoomsCount(profile.uid);
+    
+    // Definir limites baseados no tipo de conta
+    const isPremium = profile.accountType === 'premium' || profile.isPremium;
+    const maxRoomsPerDay = isPremium ? Infinity : 1;
+    const maxSimultaneous = isPremium ? 2 : 1;
+    
+    // Usuário pode criar se não atingiu o limite diário E não atingiu o limite simultâneo
+    const canCreate = (isPremium || roomsToday < 1) && activeRoomsCount < maxSimultaneous;
 
     setRoomLimits({
-      maxRoomsPerDay: maxRooms,
+      maxRoomsPerDay: maxRoomsPerDay,
+      maxSimultaneousRooms: maxSimultaneous,
       canCreateRoom: canCreate,
-      roomsCreatedToday: roomsToday
+      roomsCreatedToday: roomsToday,
+      activeRooms: activeRoomsCount
     });
+  };
+
+  const getActiveRoomsCount = async (uid: string): Promise<number> => {
+    try {
+      const roomsQuery = query(
+        collection(db, 'rooms'),
+        where('createdBy', '==', uid),
+        where('isActive', '==', true)
+      );
+      const snapshot = await getDocs(roomsQuery);
+      return snapshot.size;
+    } catch (error) {
+      console.error('Erro ao contar salas ativas:', error);
+      return 0;
+    }
   };
 
   const incrementRoomCount = async () => {
@@ -77,10 +103,18 @@ export const useRoomLimits = (userId: string | undefined) => {
     
     // Reset contador se é um novo dia
     const currentCount = lastCreatedDate === today ? (userProfile.roomsCreatedToday || 0) : 0;
+    const activeRoomsCount = await getActiveRoomsCount(userProfile.uid);
 
-    // Verificar limites: Premium ilimitado, Free máximo 1 por dia
-    if (userProfile.accountType === 'free' && currentCount >= 1) {
-      return false;
+    // Verificar limites
+    const isPremium = userProfile.accountType === 'premium' || userProfile.isPremium;
+    const maxSimultaneous = isPremium ? 2 : 1;
+    
+    if (!isPremium && currentCount >= 1) {
+      return false; // Limite diário excedido para conta gratuita
+    }
+    
+    if (activeRoomsCount >= maxSimultaneous) {
+      return false; // Limite de salas simultâneas excedido
     }
 
     try {
@@ -97,7 +131,7 @@ export const useRoomLimits = (userId: string | undefined) => {
       // Atualizar estado local
       const updatedProfile = { ...userProfile, ...updates };
       setUserProfile(updatedProfile);
-      updateRoomLimits(updatedProfile);
+      await updateRoomLimits(updatedProfile);
       
       return true;
     } catch (error) {
@@ -116,6 +150,7 @@ export const useRoomLimits = (userId: string | undefined) => {
 
       const updates = {
         accountType: 'premium' as const,
+        isPremium: true,
         premiumExpiry: premiumExpiry
       };
 
@@ -123,7 +158,7 @@ export const useRoomLimits = (userId: string | undefined) => {
       
       const updatedProfile = { ...userProfile!, ...updates };
       setUserProfile(updatedProfile);
-      updateRoomLimits(updatedProfile);
+      await updateRoomLimits(updatedProfile);
       
       return true;
     } catch (error) {
@@ -133,13 +168,20 @@ export const useRoomLimits = (userId: string | undefined) => {
   };
 
   const getRemainingRooms = () => {
-    if (userProfile?.accountType === 'premium') return Infinity;
+    const isPremium = userProfile?.accountType === 'premium' || userProfile?.isPremium;
+    if (isPremium) return Infinity;
     
     const today = new Date().toDateString();
     const lastCreatedDate = userProfile?.lastRoomCreatedDate || '';
     const roomsToday = lastCreatedDate === today ? (userProfile?.roomsCreatedToday || 0) : 0;
     
-    return Math.max(0, 1 - roomsToday); // Máximo 1 sala por dia para contas gratuitas
+    return Math.max(0, 1 - roomsToday);
+  };
+
+  const getRemainingSimultaneous = () => {
+    const isPremium = userProfile?.accountType === 'premium' || userProfile?.isPremium;
+    const maxSimultaneous = isPremium ? 2 : 1;
+    return Math.max(0, maxSimultaneous - roomLimits.activeRooms);
   };
 
   const getResetTime = () => {
@@ -149,6 +191,12 @@ export const useRoomLimits = (userId: string | undefined) => {
     return tomorrow;
   };
 
+  const refreshLimits = async () => {
+    if (userProfile) {
+      await updateRoomLimits(userProfile);
+    }
+  };
+
   return {
     userProfile,
     roomLimits,
@@ -156,6 +204,8 @@ export const useRoomLimits = (userId: string | undefined) => {
     incrementRoomCount,
     upgradeToPremium,
     getRemainingRooms,
-    getResetTime
+    getRemainingSimultaneous,
+    getResetTime,
+    refreshLimits
   };
 };

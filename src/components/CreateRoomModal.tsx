@@ -9,7 +9,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Card, CardContent } from './ui/card';
-import { User, Search, Loader2, X, Plus, Crown, AlertCircle } from 'lucide-react';
+import { User, Search, Loader2, X, Plus, Crown, AlertCircle, Calendar, Clock } from 'lucide-react';
 
 const ACTIVITY_TYPES = ['boss', 'hunt', 'quest'];
 
@@ -20,13 +20,18 @@ interface CreateRoomModalProps {
 
 export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [user] = useAuthState(auth);
-    const { userProfile, roomLimits, incrementRoomCount, upgradeToPremium, getRemainingRooms } = useRoomLimits(user?.uid);
+    const { userProfile, roomLimits, incrementRoomCount, upgradeToPremium, getRemainingRooms, getRemainingSimultaneous } = useRoomLimits(user?.uid);
   const [title, setTitle] = useState('');
   const [activityType, setActivityType] = useState('');
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [minLevel, setMinLevel] = useState('');
   const [maxMembers, setMaxMembers] = useState('5');
   const [loading, setLoading] = useState(false);
+  
+  // Estados para agendamento (apenas para premium)
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
   
   // Estados para busca de personagem
   const [leaderName, setLeaderName] = useState('');
@@ -148,12 +153,29 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
 
     // Verificar limites da conta
     if (!roomLimits.canCreateRoom) {
-      if (userProfile?.accountType === 'free') {
-        alert('Você já criou sua sala gratuita hoje! Contas gratuitas podem criar apenas 1 sala por dia. Upgrade para Premium para salas ilimitadas.');
+      const isPremium = userProfile?.accountType === 'premium' || userProfile?.isPremium;
+      if (!isPremium) {
+        alert('Você já criou sua sala gratuita hoje! Contas gratuitas podem criar apenas 1 sala por dia. Upgrade para Premium para criar até 2 salas simultâneas.');
       } else {
-        alert('Limite de salas atingido! Tente novamente amanhã.');
+        alert('Limite de salas simultâneas atingido! Contas Premium podem ter até 2 salas ativas ao mesmo tempo.');
       }
       return;
+    }
+
+    // Validar agendamento se estiver ativado
+    if (isScheduled) {
+      if (!scheduledDate || !scheduledTime) {
+        alert('Para agendar a sala, selecione uma data e horário válidos.');
+        return;
+      }
+      
+      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+      const now = new Date();
+      
+      if (scheduledDateTime <= now) {
+        alert('A data e horário agendados devem ser no futuro.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -167,7 +189,17 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
         return;
       }
 
-      await addDoc(collection(db, 'rooms'), {
+      // Calcular data de expiração
+      let expirationDate: Date;
+      if (isScheduled && scheduledDate && scheduledTime) {
+        // Para salas agendadas, expira na data/hora especificada
+        expirationDate = new Date(`${scheduledDate}T${scheduledTime}`);
+      } else {
+        // Para salas normais, expira em 1 hora
+        expirationDate = new Date(Date.now() + 60 * 60 * 1000);
+      }
+
+      const roomData = {
         title,
         activityType,
         selectedTargets,
@@ -177,9 +209,10 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
         world: leaderData.world,
         createdBy: user.uid,
         createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // Expira em 1 hora
+        expiresAt: expirationDate,
         members: [user.uid],
         isActive: true,
+        isScheduled: isScheduled,
         // Dados do líder
         leaderCharacter: {
           name: leaderData.name,
@@ -187,7 +220,16 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
           vocation: leaderData.vocation,
           guild: leaderData.guild || null
         }
-      });
+      };
+
+      // Adicionar campos de agendamento se aplicável
+      if (isScheduled && scheduledDate && scheduledTime) {
+        Object.assign(roomData, {
+          scheduledFor: new Date(`${scheduledDate}T${scheduledTime}`)
+        });
+      }
+
+      await addDoc(collection(db, 'rooms'), roomData);
 
       // Reset form
       setTitle('');
@@ -517,6 +559,66 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                 </div>
               )}
             </div>
+
+            {/* Agendamento - Apenas para Premium */}
+            {(userProfile?.accountType === 'premium' || userProfile?.isPremium) && (
+              <div className="border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown className="h-4 w-4 text-yellow-600" />
+                  <span className="text-sm font-semibold text-yellow-700">Agendamento Premium</span>
+                </div>
+                
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    type="checkbox"
+                    id="schedule-toggle"
+                    checked={isScheduled}
+                    onChange={(e) => setIsScheduled(e.target.checked)}
+                    className="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
+                  />
+                  <label htmlFor="schedule-toggle" className="text-sm text-gray-700 cursor-pointer">
+                    Agendar para uma data e horário específico
+                  </label>
+                </div>
+
+                {isScheduled && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        <Calendar className="h-3 w-3 inline mr-1" />
+                        Data
+                      </label>
+                      <Input
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="text-sm border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        <Clock className="h-3 w-3 inline mr-1" />
+                        Horário
+                      </label>
+                      <Input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="text-sm border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {isScheduled && (
+                  <div className="mt-3 p-2 bg-blue-100 border border-blue-200 rounded text-xs text-blue-700">
+                    <strong>💡 Dica:</strong> A sala será automaticamente deletada na data e horário agendados. 
+                    Perfect para organizar eventos específicos!
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           </div>
           {/* Fim do conteúdo com scroll */}

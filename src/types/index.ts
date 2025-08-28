@@ -22,6 +22,11 @@ export interface PartyRoom {
   createdAt: any; // Firebase Timestamp
   members: string[];
   isActive: boolean;
+  isScheduled?: boolean; // Indica se a sala é agendada
+  scheduledFor?: any; // Firebase Timestamp para quando a sala deve começar
+  expiresAt?: any; // Firebase Timestamp para quando a sala expira
+  activityType?: string;
+  selectedTargets?: string[];
 }
 
 export interface Room {
