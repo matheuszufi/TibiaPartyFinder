@@ -192,10 +192,11 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
       // Calcular data de expiração
       let expirationDate: Date;
       if (isScheduled && scheduledDate && scheduledTime) {
-        // Para salas agendadas, expira na data/hora especificada
-        expirationDate = new Date(`${scheduledDate}T${scheduledTime}`);
+        // Para salas agendadas, expira 1 hora APÓS a data/hora especificada
+        const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+        expirationDate = new Date(scheduledDateTime.getTime() + 60 * 60 * 1000); // +1 hora
       } else {
-        // Para salas normais, expira em 1 hora
+        // Para salas normais, expira em 1 hora a partir da criação
         expirationDate = new Date(Date.now() + 60 * 60 * 1000);
       }
 
@@ -582,10 +583,10 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                 </div>
 
                 {isScheduled && (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        <Calendar className="h-3 w-3 inline mr-1" />
+                      <label className="flex items-center text-xs font-medium text-gray-700 mb-1">
+                        <Calendar className="h-3 w-3 mr-1" />
                         Data
                       </label>
                       <Input
@@ -593,19 +594,19 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                         value={scheduledDate}
                         onChange={(e) => setScheduledDate(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="text-sm border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                        className="text-sm border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 w-full"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        <Clock className="h-3 w-3 inline mr-1" />
+                      <label className="flex items-center text-xs font-medium text-gray-700 mb-1">
+                        <Clock className="h-3 w-3 mr-1" />
                         Horário
                       </label>
                       <Input
                         type="time"
                         value={scheduledTime}
                         onChange={(e) => setScheduledTime(e.target.value)}
-                        className="text-sm border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                        className="text-sm border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 w-full"
                       />
                     </div>
                   </div>
