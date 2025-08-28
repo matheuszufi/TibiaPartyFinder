@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { AutoAd } from '../components/SimpleAd';
+import { LanguageSelector } from '../components/LanguageSelector';
 import { useState, useEffect } from 'react';
 import { fetchBosses, fetchCreatures, getWorlds } from '../lib/tibia-api';
+import { useLanguage } from '../contexts/LanguageContext';
 import exivaLogo from '../assets/images/exiva.png';
 import bannerExiva from '../assets/images/bannerexiva.png';
 
@@ -56,6 +58,7 @@ interface World {
 }
 
 export default function HomePage() {
+  const { t } = useLanguage();
   const [rooms, setRooms] = useState<PartyRoom[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<PartyRoom[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -390,12 +393,13 @@ export default function HomePage() {
               <img src={exivaLogo} alt="Exiva" className="h-20 w-20" />
             </div>
           </div>
-          <div className="space-x-3">
+          <div className="flex items-center space-x-3">
+            <LanguageSelector variant="header" />
             <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-700">
-              <Link to="/login">Entrar</Link>
+              <Link to="/login">{t('header.login')}</Link>
             </Button>
             <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Link to="/register">Cadastrar</Link>
+              <Link to="/register">{t('header.register')}</Link>
             </Button>
           </div>
         </div>

@@ -6,7 +6,9 @@ import { auth, db } from '../lib/firebase';
 import { fetchBosses, fetchCreatures, getWorlds, type Boss, type Creature, type World } from '../lib/tibia-api';
 import { formatTimeRemaining } from '../utils/roomExpiration';
 import { useRoomCompletionMonitor } from '../hooks/useRoomCompletionMonitor';
+import { useLanguage } from '../contexts/LanguageContext';
 import { SimpleAdSense } from '../components/SimpleAdSense';
+import { LanguageSelector } from '../components/LanguageSelector';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -65,6 +67,7 @@ interface PartyRoom {
 
 export default function DashboardPage() {
   const [user] = useAuthState(auth);
+  const { t } = useLanguage();
   const [userData, setUserData] = useState<any>(null);
   const [rooms, setRooms] = useState<PartyRoom[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<PartyRoom[]>([]);
@@ -462,13 +465,14 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSelector variant="header" />
             <Link to="/my-rooms">
               <Button
                 variant="outline"
                 className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:border-white/40"
               >
                 <Users className="h-4 w-4 mr-2" />
-                Minhas Salas
+                {t('header.myRooms')}
               </Button>
             </Link>
             <Link to="/profile">
@@ -477,7 +481,7 @@ export default function DashboardPage() {
                 className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:border-white/40"
               >
                 <User className="h-4 w-4 mr-2" />
-                Perfil
+                {t('header.profile')}
               </Button>
             </Link>
             <Button
@@ -486,7 +490,7 @@ export default function DashboardPage() {
               className="text-white hover:bg-white/10"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Sair
+              {t('header.logout')}
             </Button>
           </div>
         </div>

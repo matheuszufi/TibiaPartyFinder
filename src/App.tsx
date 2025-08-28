@@ -5,6 +5,7 @@ import { auth } from './lib/firebase';
 import { handleRedirectResult } from './lib/auth';
 import { useRoomCleanup } from './hooks/useRoomCleanup';
 import { ToastProvider } from './contexts/ToastContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -54,59 +55,61 @@ function App() {
   }
 
   return (
-    <Router>
-      <ToastProvider>
-        <div className="min-h-screen tibia-bg">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route 
-              path="/login" 
-              element={user ? <Navigate to="/dashboard" /> : <LoginPage />} 
-            />
-            <Route 
-              path="/register" 
-              element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} 
-            />
-            <Route 
-              path="/verify-email" 
-              element={user ? <EmailVerificationPage /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/my-rooms" 
-              element={
-                <ProtectedRoute>
-                  <MyRoomsPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/profile" 
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/premium" 
-              element={
-                <ProtectedRoute>
-                  <PremiumPage />
-                </ProtectedRoute>
-              } 
-            />
-          </Routes>
-        </div>
-      </ToastProvider>
-    </Router>
+    <LanguageProvider>
+      <Router>
+        <ToastProvider>
+          <div className="min-h-screen tibia-bg">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route 
+                path="/login" 
+                element={user ? <Navigate to="/dashboard" /> : <LoginPage />} 
+              />
+              <Route 
+                path="/register" 
+                element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} 
+              />
+              <Route 
+                path="/verify-email" 
+                element={user ? <EmailVerificationPage /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-rooms" 
+                element={
+                  <ProtectedRoute>
+                    <MyRoomsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/premium" 
+                element={
+                  <ProtectedRoute>
+                    <PremiumPage />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </div>
+        </ToastProvider>
+      </Router>
+    </LanguageProvider>
   );
 }
 
