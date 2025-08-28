@@ -20,7 +20,7 @@ interface CreateRoomModalProps {
 
 export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [user] = useAuthState(auth);
-    const { userProfile, roomLimits, incrementRoomCount, upgradeToPremium, getRemainingRooms, getRemainingSimultaneous } = useRoomLimits(user?.uid);
+    const { userProfile, roomLimits, incrementRoomCount, upgradeToPremium, getRemainingRooms } = useRoomLimits(user?.uid);
   const [title, setTitle] = useState('');
   const [activityType, setActivityType] = useState('');
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
