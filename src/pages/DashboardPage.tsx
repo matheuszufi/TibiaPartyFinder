@@ -501,13 +501,13 @@ export default function DashboardPage() {
       </header>
 
       {/* Anúncio abaixo do header */}
-      <div className="bg-white border-b border-gray-200 py-6">
+      <div className="bg-white border-b border-gray-200 py-4">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
             <div className="text-center">
-              <p className="text-xs text-gray-500 mb-3">PUBLICIDADE</p>
-              <div className="flex justify-center items-center w-[320px] h-[270px] bg-gray-50 rounded-lg p-2">
-                <SimpleAdSense width={300} height={250} />
+              <p className="text-xs text-gray-500 mb-2">PUBLICIDADE</p>
+              <div className="flex justify-center items-center w-[730px] h-[92px] bg-gray-50 rounded-lg p-2">
+                <SimpleAdSense width={728} height={90} />
               </div>
             </div>
           </div>
