@@ -40,6 +40,19 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
   const [loadingData, setLoadingData] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Função para obter opções de membros baseada no tipo de conta
+  const getMemberOptions = () => {
+    const isPremium = userProfile?.accountType === 'premium';
+    
+    if (isPremium) {
+      // Contas premium: 2, 3, 4, 5, 10, 15, 30
+      return [2, 3, 4, 5, 10, 15, 30];
+    } else {
+      // Contas gratuitas: apenas 2, 3, 4, 5
+      return [2, 3, 4, 5];
+    }
+  };
+
   // Buscar dados da API quando o tipo de atividade mudar
   useEffect(() => {
     const loadActivityData = async () => {
@@ -195,8 +208,8 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-lg">
-        <DialogHeader className="pb-4">
+      <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4 sticky top-0 bg-white z-10">
           <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Plus className="h-5 w-5 text-white" />
@@ -208,9 +221,12 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Status da Conta */}
-        {userProfile && (
-          <Card className={`border-2 ${userProfile.accountType === 'premium' ? 'border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50' : 'border-gray-300 bg-gray-50'}`}>
+        <form onSubmit={handleSubmit} className="space-y-5 flex flex-col h-full">
+          {/* Conteúdo com Scroll */}
+          <div className="flex-1 overflow-y-auto px-1 space-y-6">
+            {/* Status da Conta */}
+            {userProfile && (
+              <Card className={`border-2 ${userProfile.accountType === 'premium' ? 'border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50' : 'border-gray-300 bg-gray-50'}`}>
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -289,7 +305,6 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
           </Card>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Título da Party
@@ -464,17 +479,49 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  {[2, 3, 4, 5].map((num) => (
+                  {getMemberOptions().map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-gray-900 hover:bg-gray-100">
                       {num} membros
+                      {userProfile?.accountType === 'premium' && num > 5 && (
+                        <span className="ml-2 text-xs bg-yellow-500 text-white px-1 rounded">Premium</span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Informação sobre benefícios premium */}
+              {userProfile?.accountType !== 'premium' && (
+                <div className="mt-2 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg className="h-4 w-4 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-2">
+                      <p className="text-xs text-yellow-800">
+                        <span className="font-semibold">🌟 Premium:</span> Crie salas com até 30 membros! 
+                        <span className="block mt-1">Opções: 10, 15 e 30 membros disponíveis.</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {userProfile?.accountType === 'premium' && (
+                <div className="mt-2 p-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                  <p className="text-xs text-green-800">
+                    <span className="font-semibold">✨ Conta Premium Ativa:</span> Você pode criar salas com até 30 membros!
+                  </p>
+                </div>
+              )}
             </div>
           </div>
+          </div>
+          {/* Fim do conteúdo com scroll */}
 
-          <DialogFooter className="pt-6">
+          <DialogFooter className="pt-6 sticky bottom-0 bg-white border-t border-gray-200 mt-4 z-10">
             <Button
               type="button"
               variant="outline"

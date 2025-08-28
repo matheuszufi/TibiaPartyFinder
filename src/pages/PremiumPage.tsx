@@ -53,12 +53,17 @@ export const PremiumPage = () => {
       description: "Crie quantas salas de party quiser sem limitações"
     },
     {
-      icon: <Calendar className="h-5 w-5 text-blue-600" />,
+      icon: <Users className="h-5 w-5 text-blue-600" />,
+      title: "Salas com Mais Membros",
+      description: "Crie salas com até 30 membros (2, 3, 4, 5, 10, 15, 30)"
+    },
+    {
+      icon: <Calendar className="h-5 w-5 text-purple-600" />,
       title: "Agendamento de Parties",
       description: "Agende suas hunts e eventos para datas futuras"
     },
     {
-      icon: <Star className="h-5 w-5 text-purple-600" />,
+      icon: <Star className="h-5 w-5 text-yellow-600" />,
       title: "Destaque Especial",
       description: "Suas salas aparecem em destaque na lista"
     },
