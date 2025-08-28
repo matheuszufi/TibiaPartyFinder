@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { AutoAd } from '../components/SimpleAd';
 import exivaLogo from '../assets/images/exiva.png';
+import bannerExiva from '../assets/images/bannerexiva.png';
 
 export default function HomePage() {
   return (
@@ -30,12 +31,13 @@ export default function HomePage() {
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            Encontre Sua Party Perfeita
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Conecte-se com outros jogadores, crie grupos para hunts, quests e aventuras épicas no mundo de Tibia.
-          </p>
+          <div className="mb-8">
+            <img 
+              src={bannerExiva} 
+              alt="Exiva - Party Finder" 
+              className="mx-auto max-w-full h-auto rounded-lg shadow-lg"
+            />
+          </div>
           <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
             <Link to="/register">Começar Agora</Link>
           </Button>
