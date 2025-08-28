@@ -365,11 +365,14 @@ export default function DashboardPage() {
     
     // Adicionar o líder como primeiro slot
     slots.push(
-      <div key="leader" className="bg-orange-900/30 border border-orange-500/50 rounded-lg p-2">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+      <div key="leader" className="bg-orange-900/30 border border-orange-500/50 rounded p-1.5">
+        <div className="flex items-center gap-1">
+          <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
           {room.leaderCharacter ? (
-            <span className="text-xs text-white font-medium truncate">
+            <span 
+              className="text-xs text-white font-medium truncate" 
+              title={`${room.leaderCharacter.vocation || 'N/A'} (${room.leaderCharacter.level || 'N/A'}) ${room.leaderCharacter.name || 'N/A'}`}
+            >
               {getVocationInitials(room.leaderCharacter.vocation || '')} ({room.leaderCharacter.level || 'N/A'}) {room.leaderCharacter.name || 'N/A'}
             </span>
           ) : (
@@ -389,9 +392,9 @@ export default function DashboardPage() {
       if (isEmpty) {
         // Slot vazio
         slots.push(
-          <div key={`empty-${i}`} className="bg-gray-800/30 border border-gray-600/30 rounded-lg p-2 border-dashed">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+          <div key={`empty-${i}`} className="bg-gray-800/30 border border-gray-600/30 rounded p-1.5 border-dashed">
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
               <span className="text-xs text-gray-500">Vaga Livre</span>
             </div>
           </div>
@@ -424,11 +427,14 @@ export default function DashboardPage() {
         }
         
         slots.push(
-          <div key={`member-${i}`} className="bg-green-900/30 border border-green-500/50 rounded-lg p-2">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <div key={`member-${i}`} className="bg-green-900/30 border border-green-500/50 rounded p-1.5">
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
               {finalMemberInfo ? (
-                <span className="text-xs text-white font-medium truncate">
+                <span 
+                  className="text-xs text-white font-medium truncate"
+                  title={`${finalMemberInfo.characterVocation || 'N/A'} (${finalMemberInfo.characterLevel || 'N/A'}) ${finalMemberInfo.characterName || 'N/A'}`}
+                >
                   {getVocationInitials(finalMemberInfo.characterVocation || '')} ({finalMemberInfo.characterLevel || 'N/A'}) {finalMemberInfo.characterName || 'N/A'}
                 </span>
               ) : (
@@ -458,46 +464,49 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header style={{ backgroundColor: 'rgb(17, 24, 31)' }}>
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
+        <div className="container mx-auto px-4 py-2 flex justify-between items-center">
+          <div className="flex items-center space-x-2">
             <div className="p-1 rounded-lg flex items-center justify-center">
-              <img src={exivaLogo} alt="Logo" className="h-20 w-20" />
+              <img src={exivaLogo} alt="Logo" className="h-12 w-12" />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <LanguageSelector variant="header" />
             <Link to="/my-rooms">
               <Button
                 variant="outline"
+                size="sm"
                 className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:border-white/40"
               >
-                <Users className="h-4 w-4 mr-2" />
+                <Users className="h-3 w-3 mr-1" />
                 {t('header.myRooms')}
               </Button>
             </Link>
             <Link to="/profile">
               <Button
                 variant="outline"
+                size="sm"
                 className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:border-white/40"
               >
-                <User className="h-4 w-4 mr-2" />
+                <User className="h-3 w-3 mr-1" />
                 {t('header.profile')}
               </Button>
             </Link>
             <Button
               onClick={handleLogout}
               variant="ghost"
+              size="sm"
               className="text-white hover:bg-white/10"
             >
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOut className="h-3 w-3 mr-1" />
               {t('header.logout')}
             </Button>
           </div>
         </div>
         {/* User Info Bar */}
         <div className="bg-gray-700 border-t border-gray-500">
-          <div className="container mx-auto px-4 py-2">
-            <p className="text-sm text-gray-200 text-center">
+          <div className="container mx-auto px-4 py-1">
+            <p className="text-xs text-gray-200 text-center">
               <span className="font-medium text-white">{userData.characterName}</span> - Level {userData.level} {userData.vocation} ({userData.world})
             </p>
           </div>
@@ -505,11 +514,11 @@ export default function DashboardPage() {
       </header>
 
       {/* Anúncio abaixo do header */}
-      <div className="bg-white border-b border-gray-200 py-4">
+      <div className="bg-white border-b border-gray-200 py-2">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
             <div className="text-center">
-              <p className="text-xs text-gray-500 mb-2">PUBLICIDADE</p>
+              <p className="text-xs text-gray-500 mb-1">PUBLICIDADE</p>
               <div className="flex justify-center items-center w-[730px] h-[92px] bg-gray-50 rounded-lg p-2">
                 <SimpleAdSense width={728} height={90} />
               </div>
@@ -518,49 +527,51 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-4">
         {/* Header com Filtros */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Parties Disponíveis</h2>
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Parties Disponíveis</h2>
             {hasUserCreatedRoom() ? (
               <Button
                 disabled
+                size="sm"
                 className="bg-gray-300 text-gray-600 cursor-not-allowed"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-3 w-3 mr-1" />
                 Você já criou uma party
               </Button>
             ) : (
               <Button
                 onClick={handleCreateRoom}
+                size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Party
+                <Plus className="h-3 w-3 mr-1" />
+                {t('dashboard.createRoom')}
               </Button>
             )}
           </div>
 
           {/* Filtros */}
           <Card className="bg-white shadow-sm border border-gray-200">
-            <CardHeader>
-              <CardTitle className="flex items-center text-gray-900">
-                <Filter className="h-5 w-5 mr-2" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-gray-900 text-base">
+                <Filter className="h-4 w-4 mr-2" />
                 Filtros de Busca
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CardContent className="pt-2 pb-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Busca por texto */}
                 <div>
                   <div className="relative">
-                    <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                    <Search className="h-3 w-3 absolute left-2 top-2.5 text-gray-400" />
                     <Input
                       placeholder="Buscar parties..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="pl-7 h-8 text-sm bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -568,7 +579,7 @@ export default function DashboardPage() {
                 {/* Filtro por tipo */}
                 <div>
                   <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
+                    <SelectTrigger className="h-8 text-sm bg-gray-50 border-gray-300 focus:border-blue-500">
                       <SelectValue placeholder="Tipo de Atividade" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200">
@@ -583,7 +594,7 @@ export default function DashboardPage() {
                 {/* Filtro por world */}
                 <div>
                   <Select value={filterWorld} onValueChange={setFilterWorld}>
-                    <SelectTrigger className="bg-gray-50 border-gray-300 focus:border-blue-500">
+                    <SelectTrigger className="h-8 text-sm bg-gray-50 border-gray-300 focus:border-blue-500">
                       <SelectValue placeholder="World" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200 max-h-60 overflow-y-auto">
@@ -609,15 +620,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Rooms Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredRooms.length === 0 ? (
             <Card className="col-span-full bg-white shadow-sm border border-gray-200">
-              <CardContent className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">
+              <CardContent className="text-center py-8">
+                <Users className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 text-sm">
                   {rooms.length === 0 ? 'Nenhuma party encontrada.' : 'Nenhuma party corresponde aos filtros.'}
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 mt-1">
                   {rooms.length === 0 ? 'Seja o primeiro a criar uma party!' : 'Tente ajustar os filtros de busca.'}
                 </p>
               </CardContent>
@@ -625,58 +636,58 @@ export default function DashboardPage() {
           ) : (
             filteredRooms.map((room) => (
               <Card key={room.id} className="bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between text-gray-900">
-                    <span>{room.title}</span>
-                    <span className="text-sm font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center justify-between text-gray-900 text-base">
+                    <span className="truncate">{room.title}</span>
+                    <span className="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded-full flex-shrink-0 ml-2">
                       {room.currentMembers}/{room.maxMembers}
                     </span>
                   </CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-gray-600 text-sm line-clamp-2">
                     {room.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   {/* Exibição dos GIFs das criaturas/bosses selecionados */}
                   {room.activityType && room.selectedTargets && room.selectedTargets.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center mb-2">
-                        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    <div className="mb-3">
+                      <div className="flex items-center mb-1">
+                        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
                           {room.activityType === 'boss' ? 'Bosses:' : 
                            room.activityType === 'hunt' ? 'Criaturas:' : 'Quests:'}
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2">
                         {room.selectedTargets.map((target, index) => {
                           const imageUrl = getTargetImageUrl(target, room.activityType!);
                           return (
-                            <div key={index} className="tibia-creature-card flex flex-col items-center min-w-[85px] group">
+                            <div key={index} className="tibia-creature-card flex flex-col items-center min-w-[60px] group">
                               {room.activityType === 'quest' ? (
-                                <div className="tibia-creature-image w-16 h-16 bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                                  <Scroll className="w-8 h-8 text-amber-600 group-hover:text-amber-700 transition-colors" />
+                                <div className="tibia-creature-image w-12 h-12 bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                                  <Scroll className="w-6 h-6 text-amber-600 group-hover:text-amber-700 transition-colors" />
                                 </div>
                               ) : imageUrl ? (
-                                <div className="tibia-creature-image w-16 h-16 bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-slate-200 rounded-xl p-1.5 shadow-sm group-hover:shadow-md transition-all duration-300 overflow-hidden">
+                                <div className="tibia-creature-image w-12 h-12 bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-slate-200 rounded-lg p-1 shadow-sm group-hover:shadow-md transition-all duration-300 overflow-hidden">
                                   <img 
                                     src={imageUrl} 
                                     alt={target}
-                                    className="w-full h-full object-contain rounded-lg filter group-hover:scale-110 transition-transform duration-300"
+                                    className="w-full h-full object-contain rounded filter group-hover:scale-110 transition-transform duration-300"
                                     onError={(e) => {
                                       const target = e.target as HTMLImageElement;
                                       target.style.display = 'none';
                                       const parent = target.parentElement;
                                       if (parent) {
-                                        parent.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center"><span class="text-slate-500 text-2xl font-bold">?</span></div>';
+                                        parent.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 rounded flex items-center justify-center"><span class="text-slate-500 text-lg font-bold">?</span></div>';
                                       }
                                     }}
                                   />
                                 </div>
                               ) : (
-                                <div className="tibia-creature-image w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-slate-300 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                                  <span className="text-slate-500 text-2xl font-bold group-hover:text-slate-600 transition-colors">?</span>
+                                <div className="tibia-creature-image w-12 h-12 bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-slate-300 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                                  <span className="text-slate-500 text-lg font-bold group-hover:text-slate-600 transition-colors">?</span>
                                 </div>
                               )}
-                              <span className="text-xs text-gray-700 mt-2.5 max-w-20 truncate text-center font-medium group-hover:text-gray-900 transition-colors" title={target}>
+                              <span className="text-xs text-gray-700 mt-1 max-w-16 truncate text-center font-medium group-hover:text-gray-900 transition-colors" title={target}>
                                 {target}
                               </span>
                             </div>
@@ -686,33 +697,33 @@ export default function DashboardPage() {
                     </div>
                   )}
                   
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-1 text-sm">
                     {/* Seção de Vagas da Party */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
-                      <div className="flex items-center mb-3">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-2">
+                      <div className="flex items-center mb-2">
                         <Users className="h-3 w-3 mr-1 text-blue-600" />
                         <span className="text-xs font-medium text-gray-700">Membros ({room.currentMembers}/{room.maxMembers})</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-1.5 max-h-24 overflow-y-auto">
                         {renderPartySlots(room)}
                       </div>
                     </div>
                     
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
+                    <div className="flex items-center text-gray-600 text-xs">
+                      <MapPin className="h-3 w-3 mr-1" />
                       <span>{room.world}</span>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>Level {room.minLevel}-{room.maxLevel}</span>
+                    <div className="flex items-center text-gray-600 text-xs">
+                      <Users className="h-3 w-3 mr-1" />
+                      <span>Min Level {room.minLevel}</span>
                     </div>
                     {room.requiredVocations && room.requiredVocations.length > 0 && (
-                      <div className="flex items-center text-gray-600">
-                        <span className="text-xs">Vocações: {room.requiredVocations.join(', ')}</span>
+                      <div className="flex items-center text-gray-600 text-xs">
+                        <span>Vocações: {room.requiredVocations.join(', ')}</span>
                       </div>
                     )}
                     <div className="flex items-center text-xs text-gray-500">
-                      <Clock className="h-3 w-3 mr-2" />
+                      <Clock className="h-3 w-3 mr-1" />
                       <span>Criado às {formatTime(room.createdAt)}</span>
                     </div>
                     
@@ -733,43 +744,47 @@ export default function DashboardPage() {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-3">
                     {room.createdBy === user?.uid ? (
                       // Botão para o criador da sala
                       <Button 
                         onClick={() => handleViewParty(room.id)}
+                        size="sm"
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        <Eye className="h-4 w-4 mr-2" />
+                        <Eye className="h-3 w-3 mr-1" />
                         Ver Party
                       </Button>
                     ) : isUserMember(room) ? (
                       // Botão quando já é membro
                       <Button 
                         disabled
+                        size="sm"
                         className="w-full bg-green-100 text-green-700 cursor-not-allowed"
                       >
-                        <Users className="h-4 w-4 mr-2" />
+                        <Users className="h-3 w-3 mr-1" />
                         Você está na Party
                       </Button>
                     ) : hasUserRequestedJoin(room) ? (
                       // Botão quando já solicitou entrada
                       <Button 
                         disabled
+                        size="sm"
                         className="w-full bg-yellow-100 text-yellow-700 cursor-not-allowed"
                       >
-                        <Clock className="h-4 w-4 mr-2" />
+                        <Clock className="h-3 w-3 mr-1" />
                         Aguardando Resposta do Líder
                       </Button>
                     ) : (
                       // Botão para solicitar entrada
                       <Button 
                         onClick={() => handleJoinRequest(room.id, room.title)}
+                        size="sm"
                         className="w-full"
                         disabled={room.currentMembers >= room.maxMembers}
                         variant={room.currentMembers >= room.maxMembers ? "secondary" : "default"}
                       >
-                        <UserPlus className="h-4 w-4 mr-2" />
+                        <UserPlus className="h-3 w-3 mr-1" />
                         {room.currentMembers >= room.maxMembers ? 'Party Cheia' : 'Solicitar Entrada'}
                       </Button>
                     )}
