@@ -684,11 +684,11 @@ export default function HomePage() {
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
-              <CardTitle className="text-gray-900 text-xl">Encontre Jogadores</CardTitle>
+              <CardTitle className="text-gray-900 text-xl">{t('features.findPlayers')}</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="text-center text-gray-600 leading-relaxed">
-                Descubra outros jogadores do seu world e nivel para formar groups incríveis.
+                {t('features.findPlayersDesc')}
               </CardDescription>
             </CardContent>
           </Card>
@@ -698,11 +698,11 @@ export default function HomePage() {
               <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sword className="h-8 w-8 text-green-600" />
               </div>
-              <CardTitle className="text-gray-900 text-xl">Crie Parties</CardTitle>
+              <CardTitle className="text-gray-900 text-xl">{t('features.createParties')}</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="text-center text-gray-600 leading-relaxed">
-                Monte seu próprio grupo especificando level, vocação e objetivos da hunt.
+                {t('features.createPartiesDesc')}
               </CardDescription>
             </CardContent>
           </Card>
@@ -712,11 +712,11 @@ export default function HomePage() {
               <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Shield className="h-8 w-8 text-purple-600" />
               </div>
-              <CardTitle className="text-gray-900 text-xl">Seguro & Confiável</CardTitle>
+              <CardTitle className="text-gray-900 text-xl">{t('features.safeReliable')}</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="text-center text-gray-600 leading-relaxed">
-                Validação automática de personagens e sistema de reputação para uma experiência segura.
+                {t('features.safeReliableDesc')}
               </CardDescription>
             </CardContent>
           </Card>
