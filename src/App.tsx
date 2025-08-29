@@ -14,6 +14,8 @@ import DashboardPage from './pages/DashboardPage';
 import MyRoomsPage from './pages/MyRoomsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import PremiumPage from './pages/PremiumPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -105,6 +107,8 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms-of-service" element={<TermsOfServicePage />} />
             </Routes>
           </div>
         </ToastProvider>

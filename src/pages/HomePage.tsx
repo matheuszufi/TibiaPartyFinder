@@ -763,30 +763,64 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="bg-gray-50 border-t border-gray-200 mt-16">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <div className="flex justify-center space-x-6 mb-4">
-            <a 
-              href="https://github.com/matheuszufi" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center space-x-2"
-            >
-              <Github className="h-4 w-4" />
-              <span>GitHub do Desenvolvedor</span>
-            </a>
-            <a 
-              href="https://www.tibia.com/community/?name=teuzu" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center space-x-2"
-            >
-              <User className="h-4 w-4" />
-              <span>Personagem no Tibia</span>
-            </a>
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Links do Desenvolvedor */}
+            <div className="text-center md:text-left">
+              <h3 className="font-semibold text-gray-900 mb-3">Desenvolvedor</h3>
+              <div className="space-y-2">
+                <a 
+                  href="https://github.com/matheuszufi" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center justify-center md:justify-start space-x-2"
+                >
+                  <Github className="h-4 w-4" />
+                  <span>GitHub</span>
+                </a>
+                <a 
+                  href="https://www.tibia.com/community/?name=teuzu" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center justify-center md:justify-start space-x-2"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Personagem no Tibia</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Links Legais */}
+            <div className="text-center">
+              <h3 className="font-semibold text-gray-900 mb-3">Informações Legais</h3>
+              <div className="space-y-2">
+                <Link 
+                  to="/privacy-policy"
+                  className="text-blue-600 hover:text-blue-700 hover:underline transition-colors block"
+                >
+                  Política de Privacidade
+                </Link>
+                <Link 
+                  to="/terms-of-service"
+                  className="text-blue-600 hover:text-blue-700 hover:underline transition-colors block"
+                >
+                  Termos de Serviço
+                </Link>
+              </div>
+            </div>
+
+            {/* Sobre o Projeto */}
+            <div className="text-center md:text-right">
+              <h3 className="font-semibold text-gray-900 mb-3">Sobre</h3>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>Party Finder para Tibia</p>
+                <p>Conectando jogadores desde 2024</p>
+                <p className="text-xs">
+                  © 2024 Exiva. Não afiliado oficialmente com Tibia ou CipSoft GmbH.
+                </p>
+              </div>
+            </div>
           </div>
-          <p className="text-gray-500">
-            © 2024 Exiva. Não afiliado oficialmente com Tibia ou CipSoft GmbH.
-          </p>
         </div>
       </footer>
     </div>

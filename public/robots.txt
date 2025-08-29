@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://tibia-party-finder.vercel.app/sitemap.xml
+
+# Important pages for search engines
+Allow: /
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /login
+Allow: /register
+
+# Block admin/private areas (when they exist)
+Disallow: /api/
+Disallow: /admin/
