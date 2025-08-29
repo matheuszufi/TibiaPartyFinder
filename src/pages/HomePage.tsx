@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { fetchBosses, fetchCreatures, getWorlds } from '../lib/tibia-api';
 import { useLanguage } from '../contexts/LanguageContext';
 import exivaLogo from '../assets/images/exiva.png';
-import bannerExiva from '../assets/images/bannerexiva.png';
+import bannerExiva from '../assets/images/banner4.png';
 
 interface PartyRoom {
   id: string;
