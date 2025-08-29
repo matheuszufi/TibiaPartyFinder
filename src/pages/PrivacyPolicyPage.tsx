@@ -154,7 +154,7 @@ export default function PrivacyPolicyPage() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">11. Contato</h2>
                 <p>Para dúvidas sobre esta política de privacidade, entre em contato:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li>Email: contato@exiva.com</li>
+                  <li>Email: matheuszufi@gmail.com</li>
                   <li>GitHub: <a href="https://github.com/matheuszufi" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">@matheuszufi</a></li>
                 </ul>
               </section>

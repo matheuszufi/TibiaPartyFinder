@@ -130,7 +130,23 @@ const translations = {
     // Language
     'language.portuguese': 'Português',
     'language.english': 'English',
-    'language.spanish': 'Español'
+    'language.spanish': 'Español',
+    
+    // Footer
+    'footer.developer': 'Desenvolvedor',
+    'footer.github': 'GitHub',
+    'footer.character': 'Personagem no Tibia',
+    'footer.legal': 'Informações Legais',
+    'footer.privacy': 'Política de Privacidade',
+    'footer.terms': 'Termos de Serviço',
+    'footer.about': 'Sobre',
+    'footer.aboutDescription': 'Party Finder para Tibia',
+    'footer.aboutSince': 'Conectando jogadores desde 2024',
+    'footer.copyright': '© 2024 Exiva. Não afiliado oficialmente com Tibia ou CipSoft GmbH.',
+    'footer.hasAccount': 'Já tem uma conta?',
+    'footer.loginHere': 'Faça login aqui',
+    'footer.readyTitle': 'Pronto para Aventurar?',
+    'footer.readyDescription': 'Junte-se à nossa comunidade e comece a formar parties épicas hoje mesmo!'
   },
   en: {
     // Header
@@ -250,7 +266,23 @@ const translations = {
     // Language
     'language.portuguese': 'Português',
     'language.english': 'English',
-    'language.spanish': 'Español'
+    'language.spanish': 'Español',
+    
+    // Footer
+    'footer.developer': 'Developer',
+    'footer.github': 'GitHub',
+    'footer.character': 'Character in Tibia',
+    'footer.legal': 'Legal Information',
+    'footer.privacy': 'Privacy Policy',
+    'footer.terms': 'Terms of Service',
+    'footer.about': 'About',
+    'footer.aboutDescription': 'Party Finder for Tibia',
+    'footer.aboutSince': 'Connecting players since 2024',
+    'footer.copyright': '© 2024 Exiva. Not officially affiliated with Tibia or CipSoft GmbH.',
+    'footer.hasAccount': 'Already have an account?',
+    'footer.loginHere': 'Login here',
+    'footer.readyTitle': 'Ready to Adventure?',
+    'footer.readyDescription': 'Join our community and start forming epic parties today!'
   },
   es: {
     // Header
@@ -370,7 +402,23 @@ const translations = {
     // Language
     'language.portuguese': 'Português',
     'language.english': 'English',
-    'language.spanish': 'Español'
+    'language.spanish': 'Español',
+    
+    // Footer
+    'footer.developer': 'Desarrollador',
+    'footer.github': 'GitHub',
+    'footer.character': 'Personaje en Tibia',
+    'footer.legal': 'Información Legal',
+    'footer.privacy': 'Política de Privacidad',
+    'footer.terms': 'Términos de Servicio',
+    'footer.about': 'Acerca de',
+    'footer.aboutDescription': 'Party Finder para Tibia',
+    'footer.aboutSince': 'Conectando jugadores desde 2024',
+    'footer.copyright': '© 2024 Exiva. No afiliado oficialmente con Tibia o CipSoft GmbH.',
+    'footer.hasAccount': '¿Ya tienes una cuenta?',
+    'footer.loginHere': 'Inicia sesión aquí',
+    'footer.readyTitle': '¿Listo para Aventurar?',
+    'footer.readyDescription': '¡Únete a nuestra comunidad y comienza a formar parties épicas hoy mismo!'
   }
 };
 
@@ -386,7 +434,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations['pt']] || key;
+    const translation = translations[language];
+    return (translation as any)[key] || key;
   };
 
   useEffect(() => {

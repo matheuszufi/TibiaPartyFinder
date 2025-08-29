@@ -732,10 +732,10 @@ export default function HomePage() {
           <Card className="max-w-2xl mx-auto bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
             <CardHeader>
               <CardTitle className="text-2xl text-gray-900">
-                Pronto para Aventurar?
+                {t('footer.readyTitle')}
               </CardTitle>
               <CardDescription className="text-lg text-gray-600">
-                Junte-se à nossa comunidade e comece a formar parties épicas hoje mesmo!
+                {t('footer.readyDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -743,9 +743,9 @@ export default function HomePage() {
                 <Link to="/register">{t('home.cta')}</Link>
               </Button>
               <p className="text-sm text-gray-500">
-                Já tem uma conta?{' '}
+                {t('footer.hasAccount')}{' '}
                 <Link to="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
-                  Faça login aqui
+                  {t('footer.loginHere')}
                 </Link>
               </p>
             </CardContent>
@@ -767,7 +767,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Links do Desenvolvedor */}
             <div className="text-center md:text-left">
-              <h3 className="font-semibold text-gray-900 mb-3">Desenvolvedor</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('footer.developer')}</h3>
               <div className="space-y-2">
                 <a 
                   href="https://github.com/matheuszufi" 
@@ -776,7 +776,7 @@ export default function HomePage() {
                   className="text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center justify-center md:justify-start space-x-2"
                 >
                   <Github className="h-4 w-4" />
-                  <span>GitHub</span>
+                  <span>{t('footer.github')}</span>
                 </a>
                 <a 
                   href="https://www.tibia.com/community/?name=teuzu" 
@@ -785,38 +785,38 @@ export default function HomePage() {
                   className="text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center justify-center md:justify-start space-x-2"
                 >
                   <User className="h-4 w-4" />
-                  <span>Personagem no Tibia</span>
+                  <span>{t('footer.character')}</span>
                 </a>
               </div>
             </div>
 
             {/* Links Legais */}
             <div className="text-center">
-              <h3 className="font-semibold text-gray-900 mb-3">Informações Legais</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('footer.legal')}</h3>
               <div className="space-y-2">
                 <Link 
                   to="/privacy-policy"
                   className="text-blue-600 hover:text-blue-700 hover:underline transition-colors block"
                 >
-                  Política de Privacidade
+                  {t('footer.privacy')}
                 </Link>
                 <Link 
                   to="/terms-of-service"
                   className="text-blue-600 hover:text-blue-700 hover:underline transition-colors block"
                 >
-                  Termos de Serviço
+                  {t('footer.terms')}
                 </Link>
               </div>
             </div>
 
             {/* Sobre o Projeto */}
             <div className="text-center md:text-right">
-              <h3 className="font-semibold text-gray-900 mb-3">Sobre</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('footer.about')}</h3>
               <div className="space-y-2 text-sm text-gray-600">
-                <p>Party Finder para Tibia</p>
-                <p>Conectando jogadores desde 2024</p>
+                <p>{t('footer.aboutDescription')}</p>
+                <p>{t('footer.aboutSince')}</p>
                 <p className="text-xs">
-                  © 2024 Exiva. Não afiliado oficialmente com Tibia ou CipSoft GmbH.
+                  {t('footer.copyright')}
                 </p>
               </div>
             </div>
