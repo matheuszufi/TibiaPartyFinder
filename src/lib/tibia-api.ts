@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://api.tibiadata.com/v4';
+const API_BASE_URL = 'https://api.tibiadata.com/v5';
 
 export interface Character {
   name: string;
